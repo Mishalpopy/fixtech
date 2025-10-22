@@ -1,0 +1,966 @@
+{
+	"info": {
+		"_postman_id": "complaint-api-collection",
+		"name": "Fixtek Complaint Management API",
+		"description": "Complete API collection for complaint management system including customer, partner, and admin endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Customer APIs",
+			"item": [
+				{
+					"name": "Authentication",
+					"item": [
+						{
+							"name": "Customer Register",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"123 Main St, City, State\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/customer/register",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "register"]
+								}
+							}
+						},
+						{
+							"name": "Customer Login",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/customer/login",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "login"]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    if (response.data && response.data.token) {",
+											"        pm.environment.set('customer_token', response.data.token);",
+											"    }",
+											"}"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Customer Logout",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{customer_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/customer/logout",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "logout"]
+								}
+							}
+						},
+						{
+							"name": "Customer Profile",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{customer_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/customer/profile",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "profile"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Complaints",
+					"item": [
+						{
+							"name": "Get All Complaints",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{customer_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/customer/complaints?page=1&per_page=10&status=&priority=&category=&search=",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "complaints"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "per_page",
+											"value": "10"
+										},
+										{
+											"key": "status",
+											"value": ""
+										},
+										{
+											"key": "priority",
+											"value": ""
+										},
+										{
+											"key": "category",
+											"value": ""
+										},
+										{
+											"key": "search",
+											"value": ""
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Create Complaint",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{customer_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "title",
+											"value": "Plumbing Issue in Kitchen",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "The kitchen sink is leaking and water is pooling under the cabinet. This started yesterday and is getting worse.",
+											"type": "text"
+										},
+										{
+											"key": "category",
+											"value": "plumbing",
+											"type": "text"
+										},
+										{
+											"key": "priority",
+											"value": "high",
+											"type": "text"
+										},
+										{
+											"key": "attachments[]",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/customer/complaints",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "complaints"]
+								}
+							}
+						},
+						{
+							"name": "Get Complaint Details",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{customer_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/customer/complaints/1",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "complaints", "1"]
+								}
+							}
+						},
+						{
+							"name": "Update Complaint",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{customer_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "title",
+											"value": "Updated: Plumbing Issue in Kitchen",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "The kitchen sink is still leaking. I've tried tightening the connections but the leak persists. Water is now reaching the floor.",
+											"type": "text"
+										},
+										{
+											"key": "category",
+											"value": "plumbing",
+											"type": "text"
+										},
+										{
+											"key": "priority",
+											"value": "urgent",
+											"type": "text"
+										},
+										{
+											"key": "attachments[]",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/customer/complaints/1",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "complaints", "1"]
+								}
+							}
+						},
+						{
+							"name": "Delete Complaint",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{customer_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/customer/complaints/1",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "complaints", "1"]
+								}
+							}
+						},
+						{
+							"name": "Download Attachment",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{customer_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/customer/complaints/1/attachments/1/download",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "customer", "complaints", "1", "attachments", "1", "download"]
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Partner APIs",
+			"item": [
+				{
+					"name": "Authentication",
+					"item": [
+						{
+							"name": "Partner Register",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"ABC Plumbing Services\",\n    \"email\": \"info@abcplumbing.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"456 Service St, City, State\",\n    \"business_type\": \"plumbing\",\n    \"experience_years\": 5\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/partner/register",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "partner", "register"]
+								}
+							}
+						},
+						{
+							"name": "Partner Login",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"info@abcplumbing.com\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/partner/login",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "partner", "login"]
+								}
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    if (response.data && response.data.token) {",
+											"        pm.environment.set('partner_token', response.data.token);",
+											"    }",
+											"}"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Partner Logout",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{partner_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/partner/logout",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "partner", "logout"]
+								}
+							}
+						},
+						{
+							"name": "Partner Profile",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{partner_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/partner/profile",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "partner", "profile"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Assigned Complaints",
+					"item": [
+						{
+							"name": "Get Assigned Complaints",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{partner_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/partner/complaints?page=1&per_page=10&status=&priority=&category=&search=",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "partner", "complaints"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "per_page",
+											"value": "10"
+										},
+										{
+											"key": "status",
+											"value": ""
+										},
+										{
+											"key": "priority",
+											"value": ""
+										},
+										{
+											"key": "category",
+											"value": ""
+										},
+										{
+											"key": "search",
+											"value": ""
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Get Complaint Details",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{partner_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/partner/complaints/1",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "partner", "complaints", "1"]
+								}
+							}
+						},
+						{
+							"name": "Update Complaint Status",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{partner_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"in_progress\",\n    \"partner_notes\": \"Started working on the issue. Found the leak source and will fix it today.\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/partner/complaints/1/update-status",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "partner", "complaints", "1", "update-status"]
+								}
+							}
+						},
+						{
+							"name": "Download Attachment",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{partner_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/partner/complaints/1/attachments/1/download",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "partner", "complaints", "1", "attachments", "1", "download"]
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Admin APIs",
+			"item": [
+				{
+					"name": "Complaint Management",
+					"item": [
+						{
+							"name": "Get All Complaints",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/admin/complaints?page=1&per_page=10&status=&priority=&category=&customer_id=&assigned_partner_id=&search=",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "complaints"],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "per_page",
+											"value": "10"
+										},
+										{
+											"key": "status",
+											"value": ""
+										},
+										{
+											"key": "priority",
+											"value": ""
+										},
+										{
+											"key": "category",
+											"value": ""
+										},
+										{
+											"key": "customer_id",
+											"value": ""
+										},
+										{
+											"key": "assigned_partner_id",
+											"value": ""
+										},
+										{
+											"key": "search",
+											"value": ""
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "Create Complaint",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "customer_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "title",
+											"value": "Admin Created Complaint",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "This complaint was created by admin for testing purposes.",
+											"type": "text"
+										},
+										{
+											"key": "category",
+											"value": "general",
+											"type": "text"
+										},
+										{
+											"key": "priority",
+											"value": "medium",
+											"type": "text"
+										},
+										{
+											"key": "assigned_partner_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "admin_notes",
+											"value": "Admin notes for this complaint",
+											"type": "text"
+										},
+										{
+											"key": "attachments[]",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/admin/complaints",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "complaints"]
+								}
+							}
+						},
+						{
+							"name": "Get Complaint Details",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/admin/complaints/1",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "complaints", "1"]
+								}
+							}
+						},
+						{
+							"name": "Update Complaint",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "customer_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "title",
+											"value": "Updated: Admin Created Complaint",
+											"type": "text"
+										},
+										{
+											"key": "description",
+											"value": "This complaint was updated by admin.",
+											"type": "text"
+										},
+										{
+											"key": "category",
+											"value": "general",
+											"type": "text"
+										},
+										{
+											"key": "priority",
+											"value": "high",
+											"type": "text"
+										},
+										{
+											"key": "status",
+											"value": "assigned",
+											"type": "text"
+										},
+										{
+											"key": "assigned_partner_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "admin_notes",
+											"value": "Updated admin notes",
+											"type": "text"
+										},
+										{
+											"key": "attachments[]",
+											"type": "file",
+											"src": []
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/admin/complaints/1",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "complaints", "1"]
+								}
+							}
+						},
+						{
+							"name": "Delete Complaint",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/admin/complaints/1",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "complaints", "1"]
+								}
+							}
+						},
+						{
+							"name": "Assign Complaint to Partner",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"assigned_partner_id\": 1,\n    \"admin_notes\": \"Assigned to ABC Plumbing Services for immediate attention.\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/admin/complaints/1/assign",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "complaints", "1", "assign"]
+								}
+							}
+						},
+						{
+							"name": "Update Complaint Status",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"resolved\",\n    \"admin_notes\": \"Complaint has been resolved by the assigned partner.\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/admin/complaints/1/update-status",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "complaints", "1", "update-status"]
+								}
+							}
+						},
+						{
+							"name": "Download Attachment",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/admin/complaints/1/attachments/1/download",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "complaints", "1", "attachments", "1", "download"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Helper APIs",
+					"item": [
+						{
+							"name": "Get Customers",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/admin/customers",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "customers"]
+								}
+							}
+						},
+						{
+							"name": "Get Partners",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/admin/partners",
+									"host": ["{{base_url}}"],
+									"path": ["v1", "admin", "partners"]
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": ["{{base_url}}"],
+					"path": ["health"]
+				}
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		}
+	]
+}
