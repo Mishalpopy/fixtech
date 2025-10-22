@@ -3,7 +3,9 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "postinstall": "npm rebuild",
+        "build:production": "npm ci --legacy-peer-deps && npm run build"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.0.0",
