@@ -12,7 +12,7 @@ Route::prefix('customer/')->name('customer:')->group(function () {
         Route::get('login', [CustomerAuthenticatedSessionController::class, 'create'])
             ->name('login');
 
-        Route::post('login', [CustomerAuthenticatedSessionController::class, 'store']);
+        Route::post('login', [CustomerAuthenticatedSessionController::class, 'store'])->name('login.store');
     });
 
     // Authenticated customer routes

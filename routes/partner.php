@@ -14,12 +14,12 @@ Route::prefix('partner/')->name('partner:')->group(function () {
         Route::get('login', [PartnerAuthenticatedSessionController::class, 'create'])
             ->name('login');
 
-        Route::post('login', [PartnerAuthenticatedSessionController::class, 'store']);
+        Route::post('login', [PartnerAuthenticatedSessionController::class, 'store'])->name('login.store');
 
         Route::get('register', [PartnerRegistrationController::class, 'create'])
             ->name('register');
 
-        Route::post('register', [PartnerRegistrationController::class, 'store']);
+        Route::post('register', [PartnerRegistrationController::class, 'store'])->name('register.store');
     });
 
     // Authenticated partner routes

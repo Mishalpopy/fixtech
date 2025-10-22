@@ -22,7 +22,7 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post(route('admin:login'), {
+    form.post(route('admin.auth.login.store'), {
         onFinish: () => form.reset('password'),
     });
 };
@@ -81,7 +81,7 @@ const submit = () => {
                                 <Checkbox v-model="checked" id="rememberme1" binary class="mr-2"></Checkbox>
                                 <label for="rememberme1">Remember me</label>
                             </div>
-                            <Link :href="route('admin:password.request')" class="font-medium no-underline ml-2 text-right cursor-pointer text-primary mt-2">Forgot
+                            <Link :href="route('admin.auth.password.request')" class="font-medium no-underline ml-2 text-right cursor-pointer text-primary mt-2">Forgot
                                 password?</Link>
                         </div>
                         <Button :loading="form.processing" label="Sign In" class="w-full mt-4" as="router-link" @click="submit()"></Button>

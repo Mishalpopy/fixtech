@@ -41,7 +41,7 @@ function logoutUser() {
     axios.post(route('logout', {}))
         .then((res) => {
             // window.location.reload()
-            router.get(route('admin:login'))
+            router.get(route('admin.auth.login'))
         })
         .catch(err => {
 

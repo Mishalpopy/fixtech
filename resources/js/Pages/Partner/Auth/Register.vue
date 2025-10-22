@@ -20,7 +20,7 @@ function onEmiratesIdSelect(event) {
 }
 
 const submit = () => {
-    form.post(route('partner:register'), {
+    form.post(route('partner:register.store'), {
         onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
