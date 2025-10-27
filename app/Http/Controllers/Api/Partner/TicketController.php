@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class TicketController extends Controller
@@ -16,7 +15,7 @@ class TicketController extends Controller
      */
     public function index(Request $request)
     {
-        $partner = Auth::guard('partner')->user();
+        $partner = $request->user('sanctum');
         
         $query = Ticket::with(['customer', 'attachments'])
             ->where('assigned_partner_id', $partner->id);
@@ -55,10 +54,11 @@ class TicketController extends Controller
     /**
      * Display the specified complaint.
      */
-    public function show(Ticket $ticket)
+    public function show(Request $request, Ticket $ticket)
     {
         // Ensure the complaint is assigned to this partner
-        if ($ticket->assigned_partner_id !== Auth::guard('partner')->id()) {
+        $partner = $request->user('sanctum');
+        if ($ticket->assigned_partner_id !== $partner->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to view this complaint.'
@@ -80,7 +80,8 @@ class TicketController extends Controller
     public function updateStatus(Request $request, Ticket $ticket)
     {
         // Ensure the complaint is assigned to this partner
-        if ($ticket->assigned_partner_id !== Auth::guard('partner')->id()) {
+        $partner = $request->user('sanctum');
+        if ($ticket->assigned_partner_id !== $partner->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to update this complaint.'
@@ -108,10 +109,11 @@ class TicketController extends Controller
     /**
      * Download an attachment.
      */
-    public function downloadAttachment(Ticket $ticket, TicketAttachment $attachment)
+    public function downloadAttachment(Request $request, Ticket $ticket, TicketAttachment $attachment)
     {
         // Ensure the complaint is assigned to this partner
-        if ($ticket->assigned_partner_id !== Auth::guard('partner')->id()) {
+        $partner = $request->user('sanctum');
+        if ($ticket->assigned_partner_id !== $partner->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to download this attachment.'

@@ -8,7 +8,6 @@ use App\Models\TicketAttachment;
 use App\Models\Customer;
 use App\Models\Partner;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -81,6 +80,8 @@ class TicketController extends Controller
             'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
+        $admin = $request->user('sanctum');
+
         $ticket = Ticket::create([
             'customer_id' => $request->customer_id,
             'title' => $request->title,
@@ -90,7 +91,7 @@ class TicketController extends Controller
             'status' => $request->assigned_partner_id ? 'assigned' : 'open',
             'admin_notes' => $request->admin_notes,
             'assigned_partner_id' => $request->assigned_partner_id,
-            'assigned_by' => Auth::id(),
+            'assigned_by' => $admin->id,
             'assigned_at' => $request->assigned_partner_id ? now() : null,
         ]);
 
@@ -123,7 +124,7 @@ class TicketController extends Controller
     /**
      * Display the specified complaint.
      */
-    public function show(Ticket $ticket)
+    public function show(Request $request, Ticket $ticket)
     {
         $ticket->load(['customer', 'attachments', 'assignedPartner', 'assignedBy']);
 
@@ -152,6 +153,8 @@ class TicketController extends Controller
             'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
+        $admin = $request->user('sanctum');
+
         $ticket->update([
             'customer_id' => $request->customer_id,
             'title' => $request->title,
@@ -161,7 +164,7 @@ class TicketController extends Controller
             'status' => $request->status,
             'admin_notes' => $request->admin_notes,
             'assigned_partner_id' => $request->assigned_partner_id,
-            'assigned_by' => Auth::id(),
+            'assigned_by' => $admin->id,
             'assigned_at' => $request->assigned_partner_id ? now() : null,
         ]);
 
@@ -194,7 +197,7 @@ class TicketController extends Controller
     /**
      * Remove the specified complaint.
      */
-    public function destroy(Ticket $ticket)
+    public function destroy(Request $request, Ticket $ticket)
     {
         // Delete associated files
         foreach ($ticket->attachments as $attachment) {
@@ -221,9 +224,11 @@ class TicketController extends Controller
             'admin_notes' => 'nullable|string|max:1000'
         ]);
 
+        $admin = $request->user('sanctum');
+
         $ticket->update([
             'assigned_partner_id' => $request->assigned_partner_id,
-            'assigned_by' => Auth::id(),
+            'assigned_by' => $admin->id,
             'assigned_at' => now(),
             'status' => 'assigned',
             'admin_notes' => $request->admin_notes
@@ -266,7 +271,7 @@ class TicketController extends Controller
     /**
      * Download an attachment.
      */
-    public function downloadAttachment(Ticket $ticket, TicketAttachment $attachment)
+    public function downloadAttachment(Request $request, Ticket $ticket, TicketAttachment $attachment)
     {
         // Ensure the attachment belongs to this ticket
         if ($attachment->ticket_id !== $ticket->id) {
@@ -289,7 +294,7 @@ class TicketController extends Controller
     /**
      * Get customers for dropdown.
      */
-    public function getCustomers()
+    public function getCustomers(Request $request)
     {
         $customers = Customer::select('id', 'name', 'email')->get();
 
@@ -303,7 +308,7 @@ class TicketController extends Controller
     /**
      * Get partners for dropdown.
      */
-    public function getPartners()
+    public function getPartners(Request $request)
     {
         $partners = Partner::select('id', 'name', 'email')->get();
 

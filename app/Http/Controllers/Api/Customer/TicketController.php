@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -17,7 +16,7 @@ class TicketController extends Controller
      */
     public function index(Request $request)
     {
-        $customer = Auth::guard('customer')->user();
+        $customer = $request->user('sanctum');
         
         $query = Ticket::with(['attachments'])
             ->where('customer_id', $customer->id);
@@ -67,7 +66,7 @@ class TicketController extends Controller
             'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
-        $customer = Auth::guard('customer')->user();
+        $customer = $request->user('sanctum');
 
         $ticket = Ticket::create([
             'customer_id' => $customer->id,
@@ -107,10 +106,11 @@ class TicketController extends Controller
     /**
      * Display the specified complaint.
      */
-    public function show(Ticket $ticket)
+    public function show(Request $request, Ticket $ticket)
     {
         // Ensure the complaint belongs to this customer
-        if ($ticket->customer_id !== Auth::guard('customer')->id()) {
+        $customer = $request->user('sanctum');
+        if ($ticket->customer_id !== $customer->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to view this complaint.'
@@ -132,7 +132,8 @@ class TicketController extends Controller
     public function update(Request $request, Ticket $ticket)
     {
         // Ensure the complaint belongs to this customer
-        if ($ticket->customer_id !== Auth::guard('customer')->id()) {
+        $customer = $request->user('sanctum');
+        if ($ticket->customer_id !== $customer->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to update this complaint.'
@@ -192,10 +193,11 @@ class TicketController extends Controller
     /**
      * Remove the specified complaint.
      */
-    public function destroy(Ticket $ticket)
+    public function destroy(Request $request, Ticket $ticket)
     {
         // Ensure the complaint belongs to this customer
-        if ($ticket->customer_id !== Auth::guard('customer')->id()) {
+        $customer = $request->user('sanctum');
+        if ($ticket->customer_id !== $customer->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to delete this complaint.'
@@ -228,10 +230,11 @@ class TicketController extends Controller
     /**
      * Download an attachment.
      */
-    public function downloadAttachment(Ticket $ticket, TicketAttachment $attachment)
+    public function downloadAttachment(Request $request, Ticket $ticket, TicketAttachment $attachment)
     {
         // Ensure the complaint belongs to this customer
-        if ($ticket->customer_id !== Auth::guard('customer')->id()) {
+        $customer = $request->user('sanctum');
+        if ($ticket->customer_id !== $customer->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to download this attachment.'
