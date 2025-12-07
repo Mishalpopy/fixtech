@@ -56,12 +56,45 @@ class Customer extends Authenticatable
 
     public function getFormattedCreatedAtAttribute()
     {
-        return Carbon::parse($this->created_at)->format('d-m-Y');
+        return $this->created_at ? Carbon::parse($this->created_at)->format('d-m-Y') : null;
     }
 
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    /**
+     * Get the customer's wallet
+     */
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class, 'customer_id');
+    }
+
+    /**
+     * Get or create wallet for customer
+     */
+    public function getOrCreateWallet()
+    {
+        if (!$this->wallet) {
+            $this->wallet()->create([
+                'balance' => 0.00,
+                'reserved_balance' => 0.00,
+                'currency' => 'AED',
+                'status' => 'active',
+            ]);
+            $this->load('wallet');
+        }
+        return $this->wallet;
+    }
+
+    /**
+     * Get all payments for this customer
+     */
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'customer_id');
     }
 }
 

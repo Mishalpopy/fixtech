@@ -1,20 +1,23 @@
 <script setup>
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/Admin/AppLayout.vue';
 import BreadCrumb from '@/Components/BreadCrumb.vue';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
-import FileUpload from 'primevue/fileupload';
 import Card from 'primevue/card';
 import Divider from 'primevue/divider';
-import Message from 'primevue/message';
+import InputNumber from 'primevue/inputnumber';
+import Calendar from 'primevue/calendar';
+import ToggleSwitch from 'primevue/toggleswitch';
+import axios from 'axios';
 
 const props = defineProps({
     customers: Array,
-    partners: Array
+    partners: Array,
+    services: Array
 });
 
 const breadcrumbs = ref([
@@ -26,8 +29,17 @@ const breadcrumbs = ref([
 // Form setup
 const form = useForm({
     customer_id: '',
+    service_id: '',
+    sub_service_id: '',
     title: '',
     description: '',
+    items: [],
+    is_urgent: false,
+    scheduled_date_time: null,
+    address: '',
+    location: '',
+    latitude: null,
+    longitude: null,
     category: '',
     priority: 'medium',
     assigned_partner_id: '',
@@ -67,8 +79,84 @@ const partnerOptions = [
     }))
 ];
 
+// Service options
+const serviceOptions = props.services.map(service => ({
+    label: service.name,
+    value: service.id
+}));
+
+// Dynamic data
+const subServices = ref([]);
+const serviceItems = ref([]);
+const loadingSubServices = ref(false);
+const loadingServiceItems = ref(false);
+
+// Watch for service changes
+watch(() => form.service_id, async (newServiceId) => {
+    form.sub_service_id = '';
+    form.items = [];
+    serviceItems.value = [];
+    
+    if (newServiceId) {
+        loadingSubServices.value = true;
+        try {
+            const response = await axios.get('/admin/tickets/get-sub-services', {
+                params: { service_id: newServiceId }
+            });
+            subServices.value = response.data.map(sub => ({
+                label: sub.name,
+                value: sub.id
+            }));
+        } catch (error) {
+            console.error('Error fetching sub-services:', error);
+        } finally {
+            loadingSubServices.value = false;
+        }
+    } else {
+        subServices.value = [];
+    }
+});
+
+// Watch for sub-service changes
+watch(() => form.sub_service_id, async (newSubServiceId) => {
+    form.items = [];
+    
+    if (newSubServiceId) {
+        loadingServiceItems.value = true;
+        try {
+            const response = await axios.get('/admin/tickets/get-service-items', {
+                params: { sub_service_id: newSubServiceId }
+            });
+            serviceItems.value = response.data.map(item => ({
+                label: item.name,
+                value: item.id,
+                price: item.price
+            }));
+        } catch (error) {
+            console.error('Error fetching service items:', error);
+        } finally {
+            loadingServiceItems.value = false;
+        }
+    } else {
+        serviceItems.value = [];
+    }
+});
+
+// Item management
+const addItem = () => {
+    form.items.push({
+        service_item_id: '',
+        quantity: 1
+    });
+};
+
+const removeItem = (index) => {
+    form.items.splice(index, 1);
+};
+
 // File handling
 const selectedFiles = ref([]);
+const fileInput = ref(null);
 
 const handleFileSelect = (event) => {
     const files = Array.from(event.target.files);
@@ -81,8 +169,17 @@ const removeFile = (index) => {
     form.attachments = selectedFiles.value;
 };
 
+// Get item price for display
+const getItemPrice = (itemId) => {
+    const item = serviceItems.value.find(i => i.value === itemId);
+    return item ? item.price : null;
+};
+
 const submit = () => {
-    form.post(route('admin:tickets.store'));
+    form.post(route('admin:tickets.store'), {
+        forceFormData: true,
+        preserveScroll: true
+    });
 };
 </script>
 
@@ -97,7 +194,7 @@ const submit = () => {
         </template>
         
         <div class="mt-4 mx-6">
-            <div class="max-w-4xl mx-auto">
+            <div class="max-w-5xl mx-auto">
                 <Card class="mb-6">
                     <template #title>
                         <div class="flex items-center gap-3">
@@ -107,7 +204,7 @@ const submit = () => {
                     </template>
                     <template #content>
                         <p class="text-gray-600 mb-0">
-                            Create a new complaint on behalf of a customer. You can assign it to a partner immediately or leave it unassigned.
+                            Create a new complaint on behalf of a customer. Fill in all required information to proceed.
                         </p>
                     </template>
                 </Card>
@@ -143,7 +240,123 @@ const submit = () => {
 
                             <Divider />
 
-                            <!-- Basic Information -->
+                            <!-- Service Selection -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <i class="pi pi-wrench text-green-500"></i>
+                                    Service Selection
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label for="service_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Select Service *
+                                        </label>
+                                        <Dropdown
+                                            id="service_id"
+                                            v-model="form.service_id"
+                                            :options="serviceOptions"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            placeholder="Choose a service"
+                                            class="w-full"
+                                            :class="{ 'p-invalid': form.errors.service_id }"
+                                            :loading="loadingSubServices"
+                                            required
+                                        />
+                                        <small v-if="form.errors.service_id" class="p-error">{{ form.errors.service_id }}</small>
+                                    </div>
+
+                                    <div>
+                                        <label for="sub_service_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Select Sub Service *
+                                        </label>
+                                        <Dropdown
+                                            id="sub_service_id"
+                                            v-model="form.sub_service_id"
+                                            :options="subServices"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            placeholder="Choose a sub service"
+                                            class="w-full"
+                                            :class="{ 'p-invalid': form.errors.sub_service_id }"
+                                            :disabled="!form.service_id || loadingSubServices"
+                                            :loading="loadingSubServices"
+                                            required
+                                        />
+                                        <small v-if="form.errors.sub_service_id" class="p-error">{{ form.errors.sub_service_id }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Divider />
+
+                            <!-- Service Items -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <i class="pi pi-box text-purple-500"></i>
+                                    Service Items (Optional)
+                                </h3>
+                                
+                                <div v-for="(item, index) in form.items" :key="index" class="mb-4 p-4 border border-gray-200 rounded-lg">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="md:col-span-2">
+                                            <label :for="`item_${index}`" class="block text-sm font-medium text-gray-700 mb-2">
+                                                Item *
+                                            </label>
+                                            <Dropdown
+                                                :id="`item_${index}`"
+                                                v-model="item.service_item_id"
+                                                :options="serviceItems"
+                                                optionLabel="label"
+                                                optionValue="value"
+                                                placeholder="Select an item"
+                                                class="w-full"
+                                                :disabled="!form.sub_service_id || loadingServiceItems"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label :for="`quantity_${index}`" class="block text-sm font-medium text-gray-700 mb-2">
+                                                Quantity *
+                                            </label>
+                                            <InputNumber
+                                                :id="`quantity_${index}`"
+                                                v-model="item.quantity"
+                                                :min="1"
+                                                class="w-full"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div v-if="getItemPrice(item.service_item_id)" class="mt-2 text-sm text-gray-600">
+                                        Price: ₹{{ getItemPrice(item.service_item_id) }}
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        @click="removeItem(index)"
+                                        icon="pi pi-times"
+                                        severity="danger"
+                                        text
+                                        rounded
+                                        size="small"
+                                        class="mt-2"
+                                        label="Remove"
+                                    />
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    @click="addItem"
+                                    icon="pi pi-plus"
+                                    label="Add Item"
+                                    severity="secondary"
+                                    outlined
+                                    :disabled="!form.sub_service_id || loadingServiceItems"
+                                />
+                            </div>
+
+                            <Divider />
+
+                            <!-- Complaint Details -->
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                     <i class="pi pi-info-circle text-green-500"></i>
@@ -165,10 +378,26 @@ const submit = () => {
                                     <small v-if="form.errors.title" class="p-error">{{ form.errors.title }}</small>
                                 </div>
 
+                                <div class="mb-4">
+                                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Detailed Description *
+                                    </label>
+                                    <Textarea
+                                        id="description"
+                                        v-model="form.description"
+                                        rows="6"
+                                        placeholder="Please provide a detailed description of the complaint..."
+                                        class="w-full"
+                                        :class="{ 'p-invalid': form.errors.description }"
+                                        required
+                                    />
+                                    <small v-if="form.errors.description" class="p-error">{{ form.errors.description }}</small>
+                                </div>
+
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                     <div>
                                         <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
-                                            Category *
+                                            Category
                                         </label>
                                         <Dropdown
                                             id="category"
@@ -176,10 +405,9 @@ const submit = () => {
                                             :options="categories"
                                             optionLabel="label"
                                             optionValue="value"
-                                            placeholder="Select a category"
+                                            placeholder="Select a category (optional)"
                                             class="w-full"
                                             :class="{ 'p-invalid': form.errors.category }"
-                                            required
                                         />
                                         <small v-if="form.errors.category" class="p-error">{{ form.errors.category }}</small>
                                     </div>
@@ -197,73 +425,128 @@ const submit = () => {
                                             placeholder="Select priority"
                                             class="w-full"
                                             :class="{ 'p-invalid': form.errors.priority }"
+                                            :disabled="form.is_urgent"
                                             required
                                         />
                                         <small v-if="form.errors.priority" class="p-error">{{ form.errors.priority }}</small>
                                     </div>
                                 </div>
+                            </div>
 
-                                <div>
-                                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-                                        Detailed Description *
+                            <Divider />
+
+                            <!-- Scheduling & Urgency -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <i class="pi pi-calendar text-indigo-500"></i>
+                                    Scheduling & Urgency
+                                </h3>
+                                
+                                <div class="mb-4">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <ToggleSwitch v-model="form.is_urgent" />
+                                        <label class="text-sm font-medium text-gray-700">
+                                            Urgently Required
+                                        </label>
+                                    </div>
+                                    <small class="text-gray-500 block mb-4">
+                                        <i class="pi pi-info-circle mr-1"></i>
+                                        If checked, the complaint will be marked as urgent and priority will be set to urgent automatically.
+                                    </small>
+                                </div>
+
+                                <div v-if="!form.is_urgent" class="mb-4">
+                                    <label for="scheduled_date_time" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Scheduled Date & Time
                                     </label>
-                                    <Textarea
-                                        id="description"
-                                        v-model="form.description"
-                                        rows="6"
-                                        placeholder="Please provide a detailed description of the complaint..."
+                                    <Calendar
+                                        id="scheduled_date_time"
+                                        v-model="form.scheduled_date_time"
+                                        showTime
+                                        hourFormat="12"
+                                        dateFormat="dd/mm/yy"
+                                        placeholder="Select date and time"
                                         class="w-full"
-                                        :class="{ 'p-invalid': form.errors.description }"
-                                        required
+                                        :class="{ 'p-invalid': form.errors.scheduled_date_time }"
                                     />
-                                    <small v-if="form.errors.description" class="p-error">{{ form.errors.description }}</small>
+                                    <small v-if="form.errors.scheduled_date_time" class="p-error">{{ form.errors.scheduled_date_time }}</small>
                                 </div>
                             </div>
 
                             <Divider />
 
-                            <!-- Assignment & Notes -->
+                            <!-- Address & Location -->
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                    <i class="pi pi-users text-purple-500"></i>
-                                    Assignment & Notes
+                                    <i class="pi pi-map-marker text-red-500"></i>
+                                    Address & Location
                                 </h3>
                                 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div class="mb-4">
+                                    <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Address *
+                                    </label>
+                                    <Textarea
+                                        id="address"
+                                        v-model="form.address"
+                                        rows="3"
+                                        placeholder="Enter the complete address"
+                                        class="w-full"
+                                        :class="{ 'p-invalid': form.errors.address }"
+                                        required
+                                    />
+                                    <small v-if="form.errors.address" class="p-error">{{ form.errors.address }}</small>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                     <div>
-                                        <label for="assigned_partner_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                            Assign to Partner
+                                        <label for="location" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Location Name
                                         </label>
-                                        <Dropdown
-                                            id="assigned_partner_id"
-                                            v-model="form.assigned_partner_id"
-                                            :options="partnerOptions"
-                                            optionLabel="label"
-                                            optionValue="value"
-                                            placeholder="Choose a partner (optional)"
+                                        <InputText
+                                            id="location"
+                                            v-model="form.location"
+                                            placeholder="e.g., Office, Home, etc."
                                             class="w-full"
-                                            :class="{ 'p-invalid': form.errors.assigned_partner_id }"
+                                            :class="{ 'p-invalid': form.errors.location }"
                                         />
-                                        <small v-if="form.errors.assigned_partner_id" class="p-error">{{ form.errors.assigned_partner_id }}</small>
-                                        <small class="text-gray-500 mt-1 block">
-                                            <i class="pi pi-info-circle mr-1"></i>
-                                            You can assign this complaint to a partner now or leave it unassigned.
-                                        </small>
+                                        <small v-if="form.errors.location" class="p-error">{{ form.errors.location }}</small>
                                     </div>
 
                                     <div>
-                                        <label for="admin_notes" class="block text-sm font-medium text-gray-700 mb-2">
-                                            Admin Notes
+                                        <label for="latitude" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Latitude
                                         </label>
-                                        <Textarea
-                                            id="admin_notes"
-                                            v-model="form.admin_notes"
-                                            rows="3"
-                                            placeholder="Add any internal notes about this complaint..."
+                                        <InputNumber
+                                            id="latitude"
+                                            v-model="form.latitude"
+                                            :min="-90"
+                                            :max="90"
+                                            :minFractionDigits="6"
+                                            :maxFractionDigits="8"
+                                            placeholder="Latitude"
                                             class="w-full"
-                                            :class="{ 'p-invalid': form.errors.admin_notes }"
+                                            :class="{ 'p-invalid': form.errors.latitude }"
                                         />
-                                        <small v-if="form.errors.admin_notes" class="p-error">{{ form.errors.admin_notes }}</small>
+                                        <small v-if="form.errors.latitude" class="p-error">{{ form.errors.latitude }}</small>
+                                    </div>
+
+                                    <div>
+                                        <label for="longitude" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Longitude
+                                        </label>
+                                        <InputNumber
+                                            id="longitude"
+                                            v-model="form.longitude"
+                                            :min="-180"
+                                            :max="180"
+                                            :minFractionDigits="6"
+                                            :maxFractionDigits="8"
+                                            placeholder="Longitude"
+                                            class="w-full"
+                                            :class="{ 'p-invalid': form.errors.longitude }"
+                                        />
+                                        <small v-if="form.errors.longitude" class="p-error">{{ form.errors.longitude }}</small>
                                     </div>
                                 </div>
                             </div>
@@ -288,7 +571,7 @@ const submit = () => {
                                     />
                                     <Button
                                         type="button"
-                                        @click="$refs.fileInput.click()"
+                                        @click="fileInput.click()"
                                         icon="pi pi-upload"
                                         label="Choose Files"
                                         severity="secondary"
@@ -328,6 +611,50 @@ const submit = () => {
                                 </div>
 
                                 <small v-if="form.errors.attachments" class="p-error block mt-2">{{ form.errors.attachments }}</small>
+                            </div>
+
+                            <Divider />
+
+                            <!-- Assignment & Notes -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <i class="pi pi-users text-purple-500"></i>
+                                    Assignment & Notes
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label for="assigned_partner_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Assign to Partner
+                                        </label>
+                                        <Dropdown
+                                            id="assigned_partner_id"
+                                            v-model="form.assigned_partner_id"
+                                            :options="partnerOptions"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            placeholder="Choose a partner (optional)"
+                                            class="w-full"
+                                            :class="{ 'p-invalid': form.errors.assigned_partner_id }"
+                                        />
+                                        <small v-if="form.errors.assigned_partner_id" class="p-error">{{ form.errors.assigned_partner_id }}</small>
+                                    </div>
+
+                                    <div>
+                                        <label for="admin_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Admin Notes
+                                        </label>
+                                        <Textarea
+                                            id="admin_notes"
+                                            v-model="form.admin_notes"
+                                            rows="3"
+                                            placeholder="Add any internal notes about this complaint..."
+                                            class="w-full"
+                                            :class="{ 'p-invalid': form.errors.admin_notes }"
+                                        />
+                                        <small v-if="form.errors.admin_notes" class="p-error">{{ form.errors.admin_notes }}</small>
+                                    </div>
+                                </div>
                             </div>
 
                             <Divider />

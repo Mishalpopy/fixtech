@@ -5,6 +5,12 @@ use App\Http\Controllers\Admin\Bookings\BookingController;
 use App\Http\Controllers\Admin\Customers\CustomerController;
 use App\Http\Controllers\Admin\Hotel\HotelController;
 use App\Http\Controllers\Admin\Redeem\RedeemCodeController;
+use App\Http\Controllers\Admin\Services\ServiceController;
+use App\Http\Controllers\Admin\Services\SubServiceController;
+use App\Http\Controllers\Admin\Services\ServiceItemController;
+use App\Http\Controllers\Admin\Services\ServiceProcessController;
+use App\Http\Controllers\Admin\Services\SubServicePriceChartController;
+use App\Http\Controllers\Admin\Services\SubServiceFaqController;
 use App\Http\Controllers\Admin\Tickets\TicketController;
 use App\Http\Controllers\Admin\Voucher\VoucherCodeController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -43,11 +49,43 @@ Route::prefix('admin/')->name('admin:')->group(function () {
         Route::post('partners/{partner}/reject', [App\Http\Controllers\Admin\Partners\PartnerController::class, 'reject'])->name('partners.reject');
         Route::get('partners-pending-approvals', [App\Http\Controllers\Admin\Partners\PartnerController::class, 'pendingApprovals'])->name('partners.pending');
 
-        //complaints/tickets
+        //complaints/tickets - specific routes must come before resource route
+        Route::get('tickets/get-sub-services', [TicketController::class, 'getSubServices'])->name('tickets.get_sub_services');
+        Route::get('tickets/get-service-items', [TicketController::class, 'getServiceItems'])->name('tickets.get_service_items');
+        Route::get('tickets/{ticket}/attachments/{attachment}/download', [TicketController::class, 'downloadAttachment'])->name('tickets.attachments.download');
         Route::resource('tickets', TicketController::class)->names('tickets');
         Route::post('tickets/{ticket}/assign', [TicketController::class, 'assign'])->name('tickets.assign');
         Route::post('tickets/{ticket}/update-status', [TicketController::class, 'updateStatus'])->name('tickets.update_status');
-        Route::get('tickets/{ticket}/attachments/{attachment}/download', [TicketController::class, 'downloadAttachment'])->name('tickets.attachments.download');
+
+        //services
+        Route::resource('services', ServiceController::class)->names('services');
+        Route::post('services/{service}/change-status', [ServiceController::class, 'changeStatus'])->name('services.change_status');
+        
+        //sub services
+        Route::resource('sub-services', SubServiceController::class)->names('sub-services');
+        Route::post('sub-services/{subService}/change-status', [SubServiceController::class, 'changeStatus'])->name('sub-services.change_status');
+        
+        //service items
+        Route::resource('service-items', ServiceItemController::class)->names('service-items');
+        Route::post('service-items/{serviceItem}/change-status', [ServiceItemController::class, 'changeStatus'])->name('service-items.change_status');
+        
+        //service processes
+        Route::resource('processes', ServiceProcessController::class)->names('processes');
+        Route::get('processes/bulk/create', [ServiceProcessController::class, 'bulkCreate'])->name('processes.bulk.create');
+        Route::post('processes/bulk/store', [ServiceProcessController::class, 'bulkStore'])->name('processes.bulk.store');
+        Route::post('processes/{process}/change-status', [ServiceProcessController::class, 'changeStatus'])->name('processes.change_status');
+        
+        //price charts
+        Route::resource('price-charts', SubServicePriceChartController::class)->names('price-charts');
+        Route::get('price-charts/bulk/create', [SubServicePriceChartController::class, 'bulkCreate'])->name('price-charts.bulk.create');
+        Route::post('price-charts/bulk/store', [SubServicePriceChartController::class, 'bulkStore'])->name('price-charts.bulk.store');
+        Route::post('price-charts/{priceChart}/change-status', [SubServicePriceChartController::class, 'changeStatus'])->name('price-charts.change_status');
+        
+        //faqs
+        Route::resource('faqs', SubServiceFaqController::class)->names('faqs');
+        Route::get('faqs/bulk/create', [SubServiceFaqController::class, 'bulkCreate'])->name('faqs.bulk.create');
+        Route::post('faqs/bulk/store', [SubServiceFaqController::class, 'bulkStore'])->name('faqs.bulk.store');
+        Route::post('faqs/{faq}/change-status', [SubServiceFaqController::class, 'changeStatus'])->name('faqs.change_status');
 
 
         //settings section

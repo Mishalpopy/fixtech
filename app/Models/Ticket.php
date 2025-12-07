@@ -14,11 +14,19 @@ class Ticket extends Model
     protected $fillable = [
         'ticket_number',
         'customer_id',
+        'service_id',
+        'sub_service_id',
         'title',
         'description',
         'category',
         'priority',
         'status',
+        'is_urgent',
+        'scheduled_date_time',
+        'address',
+        'location',
+        'latitude',
+        'longitude',
         'admin_notes',
         'partner_notes',
         'assigned_partner_id',
@@ -30,6 +38,10 @@ class Ticket extends Model
     protected $casts = [
         'resolved_at' => 'datetime',
         'assigned_at' => 'datetime',
+        'scheduled_date_time' => 'datetime',
+        'is_urgent' => 'boolean',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
     ];
 
     protected $appends = [
@@ -57,9 +69,24 @@ class Ticket extends Model
         return $this->belongsTo(User::class, 'assigned_by');
     }
 
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(Service::class);
+    }
+
+    public function subService(): BelongsTo
+    {
+        return $this->belongsTo(SubService::class);
+    }
+
+    public function ticketItems(): HasMany
+    {
+        return $this->hasMany(TicketItem::class);
+    }
+
     public function getFormattedCreatedAtAttribute()
     {
-        return $this->created_at->format('d-m-Y H:i');
+        return $this->created_at ? $this->created_at->format('d-m-Y H:i') : null;
     }
 
     public function getFormattedResolvedAtAttribute()

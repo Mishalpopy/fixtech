@@ -95,6 +95,56 @@ const model = ref([
             { label: 'Customers', icon: 'pi pi-fw pi-users', to: route('admin:customers.index'), starts_with: 'admin/customers', visible: page.props.auth.permissions.includes('View Customers') },
             { label: 'Partners', icon: 'pi pi-fw pi-briefcase', to: route('admin:partners.index'), starts_with: 'admin/partners', visible: page.props.auth.permissions.includes('View Partners') },
             { label: 'Complaints', icon: 'pi pi-fw pi-exclamation-triangle', to: route('admin:tickets.index'), starts_with: 'admin/tickets', visible: true },
+            {
+                label: 'Service Management',
+                icon: 'pi pi-fw pi-wrench',
+                key: 3,
+                visible: true,
+                items: [
+                    {
+                        label: 'Services',
+                        icon: 'pi pi-fw pi-list',
+                        to: route('admin:services.index'),
+                        starts_with: 'admin/services',
+                        visible: true
+                    },
+                    {
+                        label: 'Sub Services',
+                        icon: 'pi pi-fw pi-sitemap',
+                        to: route('admin:sub-services.index'),
+                        starts_with: 'admin/sub-services',
+                        visible: true
+                    },
+                    {
+                        label: 'Service Items',
+                        icon: 'pi pi-fw pi-box',
+                        to: route('admin:service-items.index'),
+                        starts_with: 'admin/service-items',
+                        visible: true
+                    },
+                    {
+                        label: 'Processes',
+                        icon: 'pi pi-fw pi-cog',
+                        to: route('admin:processes.index'),
+                        starts_with: 'admin/processes',
+                        visible: true
+                    },
+                    {
+                        label: 'Price Charts',
+                        icon: 'pi pi-fw pi-dollar',
+                        to: route('admin:price-charts.index'),
+                        starts_with: 'admin/price-charts',
+                        visible: true
+                    },
+                    {
+                        label: 'FAQs',
+                        icon: 'pi pi-fw pi-question-circle',
+                        to: route('admin:faqs.index'),
+                        starts_with: 'admin/faqs',
+                        visible: true
+                    }
+                ]
+            },
            
         ]
     }

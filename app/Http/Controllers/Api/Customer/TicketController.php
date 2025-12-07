@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use App\Models\TicketItem;
 use App\Models\TicketAttachment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -18,7 +20,7 @@ class TicketController extends Controller
     {
         $customer = $request->user('sanctum');
         
-        $query = Ticket::with(['attachments'])
+        $query = Ticket::with(['attachments', 'service', 'subService', 'ticketItems.serviceItem'])
             ->where('customer_id', $customer->id);
 
         // Apply filters
@@ -58,9 +60,20 @@ class TicketController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'service_id' => 'required|exists:services,id',
+            'sub_service_id' => 'required|exists:sub_services,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
-            'category' => 'required|in:plumbing,electrical,hvac,appliance,general,other',
+            'items' => 'nullable|array',
+            'items.*.service_item_id' => 'required|exists:service_items,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'is_urgent' => 'nullable|boolean',
+            'scheduled_date_time' => 'nullable|date',
+            'address' => 'required|string',
+            'location' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'category' => 'nullable|in:plumbing,electrical,hvac,appliance,general,other',
             'priority' => 'required|in:low,medium,high,urgent',
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
@@ -68,33 +81,64 @@ class TicketController extends Controller
 
         $customer = $request->user('sanctum');
 
-        $ticket = Ticket::create([
-            'customer_id' => $customer->id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'category' => $request->category,
-            'priority' => $request->priority,
-            'status' => 'open'
-        ]);
+        DB::beginTransaction();
 
-        // Handle file attachments
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $originalName = $file->getClientOriginalName();
-                $fileName = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-                $filePath = $file->storeAs('ticket-attachments', $fileName, 'public');
+        try {
+            $ticket = Ticket::create([
+                'customer_id' => $customer->id,
+                'service_id' => $request->service_id,
+                'sub_service_id' => $request->sub_service_id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'category' => $request->category,
+                'priority' => $request->is_urgent ? 'urgent' : $request->priority,
+                'is_urgent' => $request->is_urgent ?? false,
+                'scheduled_date_time' => $request->scheduled_date_time ? date('Y-m-d H:i:s', strtotime($request->scheduled_date_time)) : null,
+                'address' => $request->address,
+                'location' => $request->location,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'status' => 'open'
+            ]);
 
-                TicketAttachment::create([
-                    'ticket_id' => $ticket->id,
-                    'original_name' => $originalName,
-                    'file_path' => $filePath,
-                    'file_type' => $file->getMimeType(),
-                    'file_size' => $file->getSize(),
-                ]);
+            // Handle ticket items
+            if ($request->has('items') && is_array($request->items)) {
+                foreach ($request->items as $item) {
+                    TicketItem::create([
+                        'ticket_id' => $ticket->id,
+                        'service_item_id' => $item['service_item_id'],
+                        'quantity' => $item['quantity'],
+                    ]);
+                }
             }
-        }
 
-        $ticket->load('attachments');
+            // Handle file attachments
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $originalName = $file->getClientOriginalName();
+                    $fileName = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                    $filePath = $file->storeAs('ticket-attachments', $fileName, 'public');
+
+                    TicketAttachment::create([
+                        'ticket_id' => $ticket->id,
+                        'original_name' => $originalName,
+                        'file_path' => $filePath,
+                        'file_type' => $file->getMimeType(),
+                        'file_size' => $file->getSize(),
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            $ticket->load('attachments', 'service', 'subService', 'ticketItems.serviceItem');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create complaint: ' . $e->getMessage()
+            ], 500);
+        }
 
         return response()->json([
             'success' => true,
@@ -117,7 +161,7 @@ class TicketController extends Controller
             ], 403);
         }
 
-        $ticket->load(['attachments', 'assignedPartner']);
+        $ticket->load(['attachments', 'assignedPartner', 'service', 'subService', 'ticketItems.serviceItem']);
 
         return response()->json([
             'success' => true,
@@ -149,20 +193,65 @@ class TicketController extends Controller
         }
 
         $request->validate([
+            'service_id' => 'required|exists:services,id',
+            'sub_service_id' => 'required|exists:sub_services,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
-            'category' => 'required|in:plumbing,electrical,hvac,appliance,general,other',
+            'items' => 'nullable|array',
+            'items.*.service_item_id' => 'required|exists:service_items,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'is_urgent' => 'nullable|boolean',
+            'scheduled_date_time' => 'nullable|date',
+            'address' => 'required|string',
+            'location' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'category' => 'nullable|in:plumbing,electrical,hvac,appliance,general,other',
             'priority' => 'required|in:low,medium,high,urgent',
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
-        $ticket->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'category' => $request->category,
-            'priority' => $request->priority,
-        ]);
+        DB::beginTransaction();
+
+        try {
+            $ticket->update([
+                'service_id' => $request->service_id,
+                'sub_service_id' => $request->sub_service_id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'category' => $request->category,
+                'priority' => $request->is_urgent ? 'urgent' : $request->priority,
+                'is_urgent' => $request->is_urgent ?? false,
+                'scheduled_date_time' => $request->scheduled_date_time ? date('Y-m-d H:i:s', strtotime($request->scheduled_date_time)) : null,
+                'address' => $request->address,
+                'location' => $request->location,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+            ]);
+
+            // Delete existing ticket items
+            TicketItem::where('ticket_id', $ticket->id)->delete();
+
+            // Handle ticket items
+            if ($request->has('items') && is_array($request->items)) {
+                foreach ($request->items as $item) {
+                    TicketItem::create([
+                        'ticket_id' => $ticket->id,
+                        'service_item_id' => $item['service_item_id'],
+                        'quantity' => $item['quantity'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update complaint: ' . $e->getMessage()
+            ], 500);
+        }
 
         // Handle new file attachments
         if ($request->hasFile('attachments')) {
@@ -181,7 +270,7 @@ class TicketController extends Controller
             }
         }
 
-        $ticket->load('attachments');
+        $ticket->load('attachments', 'service', 'subService', 'ticketItems.serviceItem');
 
         return response()->json([
             'success' => true,

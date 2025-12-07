@@ -93,6 +93,6 @@ class Booking extends Model
 
     public function getFormattedCreatedAtAttribute()
     {
-        return Carbon::parse($this->created_at)->format('d-m-Y');
+        return $this->created_at ? Carbon::parse($this->created_at)->format('d-m-Y') : null;
     }
 }

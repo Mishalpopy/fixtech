@@ -20,6 +20,10 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             AdminSeeder::class,
             AdminRoleSeeder::class,
+            ServicesSeeder::class,
+            ServiceProcessSeeder::class,
+            SubServicePriceChartSeeder::class,
+            SubServiceFaqSeeder::class,
         ]);
     }
 }

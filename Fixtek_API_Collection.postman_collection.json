@@ -1,0 +1,734 @@
+{
+	"info": {
+		"_postman_id": "fixtek-api-collection",
+		"name": "Fixtek Customer API",
+		"description": "API collection for Fixtek Customer Application",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Customer Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"123 Main St, City, Country\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/register",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "register"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Customer Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "login"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Customer Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/profile",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "profile"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Customer Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "logout"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Services",
+			"item": [
+				{
+					"name": "Get All Services",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/services",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "services"]
+						},
+						"description": "Get all services with sub-services, items, processes, price charts, and FAQs"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Service",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/services/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "services", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Get a single service with all relations"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Complaints (Tickets)",
+			"item": [
+				{
+					"name": "Get All Complaints",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/complaints?status=open&priority=high&search=plumbing",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "complaints"],
+							"query": [
+								{
+									"key": "status",
+									"value": "open",
+									"description": "Filter by status: open, assigned, in_progress, resolved, closed, cancelled"
+								},
+								{
+									"key": "priority",
+									"value": "high",
+									"description": "Filter by priority: low, medium, high, urgent"
+								},
+								{
+									"key": "search",
+									"value": "plumbing",
+									"description": "Search in title, description, or ticket number"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Complaint",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/complaints/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "complaints", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Complaint",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"body": {
+							"mode": "form-data",
+							"formdata": [
+								{
+									"key": "service_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "sub_service_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Plumbing Issue - Leaking Tap",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "The tap in the kitchen is leaking continuously. Water is dripping even when turned off.",
+									"type": "text"
+								},
+								{
+									"key": "items[0][service_item_id]",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "items[0][quantity]",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "items[1][service_item_id]",
+									"value": "2",
+									"type": "text"
+								},
+								{
+									"key": "items[1][quantity]",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "is_urgent",
+									"value": "true",
+									"type": "text"
+								},
+								{
+									"key": "scheduled_date_time",
+									"value": "2025-12-15 14:30:00",
+									"type": "text",
+									"description": "Required if is_urgent is false"
+								},
+								{
+									"key": "address",
+									"value": "123 Main Street, Apartment 4B, City, State, 12345",
+									"type": "text"
+								},
+								{
+									"key": "location",
+									"value": "Home",
+									"type": "text"
+								},
+								{
+									"key": "latitude",
+									"value": "40.7128",
+									"type": "text"
+								},
+								{
+									"key": "longitude",
+									"value": "-74.0060",
+									"type": "text"
+								},
+								{
+									"key": "category",
+									"value": "plumbing",
+									"type": "text",
+									"description": "Optional: plumbing, electrical, hvac, appliance, general, other"
+								},
+								{
+									"key": "priority",
+									"value": "high",
+									"type": "text",
+									"description": "low, medium, high, urgent (ignored if is_urgent is true)"
+								},
+								{
+									"key": "attachments[]",
+									"type": "file",
+									"src": [],
+									"description": "Upload files (max 5 files, 10MB each)"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/complaints",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "complaints"]
+						},
+						"description": "Create a new complaint/ticket. Use form-data for file uploads."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Complaint",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"body": {
+							"mode": "form-data",
+							"formdata": [
+								{
+									"key": "service_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "sub_service_id",
+									"value": "1",
+									"type": "text"
+								},
+								{
+									"key": "title",
+									"value": "Updated Title",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "Updated description",
+									"type": "text"
+								},
+								{
+									"key": "address",
+									"value": "Updated address",
+									"type": "text"
+								},
+								{
+									"key": "priority",
+									"value": "medium",
+									"type": "text"
+								},
+								{
+									"key": "_method",
+									"value": "PUT",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/complaints/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "complaints", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Update a complaint (only if status is 'open')"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Complaint",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/complaints/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "complaints", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Delete a complaint (only if status is 'open')"
+					},
+					"response": []
+				},
+				{
+					"name": "Download Attachment",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/complaints/:ticket_id/attachments/:attachment_id/download",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "complaints", ":ticket_id", "attachments", ":attachment_id", "download"],
+							"variable": [
+								{
+									"key": "ticket_id",
+									"value": "1"
+								},
+								{
+									"key": "attachment_id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Wallet",
+			"item": [
+				{
+					"name": "Get Wallet Balance",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/wallet/balance",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "wallet", "balance"]
+						},
+						"description": "Get current wallet balance and details"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Wallet Transactions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/wallet/transactions?type=credit&category=deposit&status=completed&date_from=2025-01-01&date_to=2025-12-31&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "wallet", "transactions"],
+							"query": [
+								{
+									"key": "type",
+									"value": "credit",
+									"description": "Filter by type: credit, debit, reserve, release, refund"
+								},
+								{
+									"key": "category",
+									"value": "deposit",
+									"description": "Filter by category: deposit, withdrawal, payment, refund, etc."
+								},
+								{
+									"key": "status",
+									"value": "completed",
+									"description": "Filter by status: pending, completed, failed, cancelled"
+								},
+								{
+									"key": "date_from",
+									"value": "2025-01-01",
+									"description": "Filter transactions from date (YYYY-MM-DD)"
+								},
+								{
+									"key": "date_to",
+									"value": "2025-12-31",
+									"description": "Filter transactions to date (YYYY-MM-DD)"
+								},
+								{
+									"key": "limit",
+									"value": "20",
+									"description": "Number of transactions per page (default: 20)"
+								}
+							]
+						},
+						"description": "Get wallet transactions with filters and pagination"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Transaction",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/wallet/transactions/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "wallet", "transactions", ":id"],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						},
+						"description": "Get details of a specific wallet transaction"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Wallet Statistics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/wallet/statistics?days=30",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "wallet", "statistics"],
+							"query": [
+								{
+									"key": "days",
+									"value": "30",
+									"description": "Number of days to include in statistics (default: 30)"
+								}
+							]
+						},
+						"description": "Get wallet statistics including total credits, debits, and transaction summary"
+					},
+					"response": []
+				},
+				{
+					"name": "Initiate Deposit",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 100.00,\n    \"mobile_callback_url\": \"https://yourapp.com/payment/callback\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/wallet/deposit",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "wallet", "deposit"]
+						},
+						"description": "Initiate a wallet deposit via PayMob. Returns payment_url that should be opened in browser/app to complete payment. mobile_callback_url is optional for mobile apps."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Deposit Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/wallet/deposit/status/:paymentId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "wallet", "deposit", "status", ":paymentId"],
+							"variable": [
+								{
+									"key": "paymentId",
+									"value": "PAY-XXX-XXX"
+								}
+							]
+						},
+						"description": "Check the status of a deposit payment"
+					},
+					"response": []
+				},
+				{
+					"name": "Request Withdrawal",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 50.00,\n    \"bank_account\": \"1234567890\",\n    \"bank_name\": \"ABC Bank\",\n    \"account_holder_name\": \"John Doe\",\n    \"description\": \"Withdrawal request\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/customer/wallet/withdrawal",
+							"host": ["{{base_url}}"],
+							"path": ["api", "v1", "customer", "wallet", "withdrawal"]
+						},
+						"description": "Request withdrawal from wallet to bank account. Amount will be deducted from wallet and processed within 1-2 business days."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "customer_token",
+			"value": "",
+			"type": "string",
+			"description": "Bearer token from login response"
+		}
+	]
+}
+

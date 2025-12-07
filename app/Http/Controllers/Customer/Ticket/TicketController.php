@@ -4,9 +4,14 @@ namespace App\Http\Controllers\Customer\Ticket;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
+use App\Models\TicketItem;
+use App\Models\Service;
+use App\Models\SubService;
+use App\Models\ServiceItem;
 use App\Models\TicketAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -34,7 +39,31 @@ class TicketController extends Controller
      */
     public function create()
     {
-        return Inertia::render('Customer/Tickets/Create');
+        $services = Service::where('status', true)->get(['id', 'name']);
+
+        return Inertia::render('Customer/Tickets/Create', [
+            'services' => $services
+        ]);
+    }
+
+    public function getSubServices(Request $request)
+    {
+        $serviceId = $request->get('service_id');
+        $subServices = SubService::where('service_id', $serviceId)
+            ->where('status', true)
+            ->get(['id', 'name', 'service_id']);
+        
+        return response()->json($subServices);
+    }
+
+    public function getServiceItems(Request $request)
+    {
+        $subServiceId = $request->get('sub_service_id');
+        $serviceItems = ServiceItem::where('sub_service_id', $subServiceId)
+            ->where('status', true)
+            ->get(['id', 'name', 'sub_service_id', 'price']);
+        
+        return response()->json($serviceItems);
     }
 
     /**
@@ -43,9 +72,20 @@ class TicketController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'service_id' => 'required|exists:services,id',
+            'sub_service_id' => 'required|exists:sub_services,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
-            'category' => 'required|in:plumbing,electrical,hvac,appliance,general,other',
+            'items' => 'nullable|array',
+            'items.*.service_item_id' => 'required|exists:service_items,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'is_urgent' => 'nullable|boolean',
+            'scheduled_date_time' => 'nullable|date',
+            'address' => 'required|string',
+            'location' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'category' => 'nullable|in:plumbing,electrical,hvac,appliance,general,other',
             'priority' => 'required|in:low,medium,high,urgent',
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
@@ -53,30 +93,58 @@ class TicketController extends Controller
 
         $customer = Auth::guard('customer')->user();
 
-        $ticket = Ticket::create([
-            'customer_id' => $customer->id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'category' => $request->category,
-            'priority' => $request->priority,
-            'status' => 'open'
-        ]);
+        DB::beginTransaction();
 
-        // Handle file attachments
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $originalName = $file->getClientOriginalName();
-                $fileName = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
-                $filePath = $file->storeAs('ticket-attachments', $fileName, 'public');
+        try {
+            $ticket = Ticket::create([
+                'customer_id' => $customer->id,
+                'service_id' => $request->service_id,
+                'sub_service_id' => $request->sub_service_id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'category' => $request->category,
+                'priority' => $request->is_urgent ? 'urgent' : $request->priority,
+                'is_urgent' => $request->is_urgent ?? false,
+                'scheduled_date_time' => $request->scheduled_date_time ? date('Y-m-d H:i:s', strtotime($request->scheduled_date_time)) : null,
+                'address' => $request->address,
+                'location' => $request->location,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'status' => 'open'
+            ]);
 
-                TicketAttachment::create([
-                    'ticket_id' => $ticket->id,
-                    'original_name' => $originalName,
-                    'file_path' => $filePath,
-                    'file_type' => $file->getMimeType(),
-                    'file_size' => $file->getSize(),
-                ]);
+            // Handle ticket items
+            if ($request->has('items') && is_array($request->items)) {
+                foreach ($request->items as $item) {
+                    TicketItem::create([
+                        'ticket_id' => $ticket->id,
+                        'service_item_id' => $item['service_item_id'],
+                        'quantity' => $item['quantity'],
+                    ]);
+                }
             }
+
+            // Handle file attachments
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $originalName = $file->getClientOriginalName();
+                    $fileName = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                    $filePath = $file->storeAs('ticket-attachments', $fileName, 'public');
+
+                    TicketAttachment::create([
+                        'ticket_id' => $ticket->id,
+                        'original_name' => $originalName,
+                        'file_path' => $filePath,
+                        'file_type' => $file->getMimeType(),
+                        'file_size' => $file->getSize(),
+                    ]);
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to create complaint: ' . $e->getMessage()]);
         }
 
         return redirect()->route('customer:tickets.index')
@@ -95,7 +163,7 @@ class TicketController extends Controller
             abort(403, 'Unauthorized access to ticket.');
         }
 
-        $ticket->load('attachments');
+        $ticket->load('attachments', 'service', 'subService', 'ticketItems.serviceItem');
 
         return Inertia::render('Customer/Tickets/Show', [
             'ticket' => $ticket
@@ -120,10 +188,16 @@ class TicketController extends Controller
                 ->with('error', 'Cannot edit complaint that is not in open status.');
         }
 
-        $ticket->load('attachments');
+        $ticket->load('attachments', 'service', 'subService', 'ticketItems.serviceItem');
+        $services = Service::where('status', true)->get(['id', 'name']);
+        $subServices = $ticket->service_id ? SubService::where('service_id', $ticket->service_id)->where('status', true)->get(['id', 'name', 'service_id']) : collect();
+        $serviceItems = $ticket->sub_service_id ? ServiceItem::where('sub_service_id', $ticket->sub_service_id)->where('status', true)->get(['id', 'name', 'sub_service_id']) : collect();
 
         return Inertia::render('Customer/Tickets/Edit', [
-            'ticket' => $ticket
+            'ticket' => $ticket,
+            'services' => $services,
+            'subServices' => $subServices,
+            'serviceItems' => $serviceItems
         ]);
     }
 
@@ -146,20 +220,62 @@ class TicketController extends Controller
         }
 
         $request->validate([
+            'service_id' => 'required|exists:services,id',
+            'sub_service_id' => 'required|exists:sub_services,id',
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:2000',
-            'category' => 'required|in:plumbing,electrical,hvac,appliance,general,other',
+            'items' => 'nullable|array',
+            'items.*.service_item_id' => 'required|exists:service_items,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'is_urgent' => 'nullable|boolean',
+            'scheduled_date_time' => 'nullable|date',
+            'address' => 'required|string',
+            'location' => 'nullable|string|max:255',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'category' => 'nullable|in:plumbing,electrical,hvac,appliance,general,other',
             'priority' => 'required|in:low,medium,high,urgent',
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
         ]);
 
-        $ticket->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'category' => $request->category,
-            'priority' => $request->priority,
-        ]);
+        DB::beginTransaction();
+
+        try {
+            $ticket->update([
+                'service_id' => $request->service_id,
+                'sub_service_id' => $request->sub_service_id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'category' => $request->category,
+                'priority' => $request->is_urgent ? 'urgent' : $request->priority,
+                'is_urgent' => $request->is_urgent ?? false,
+                'scheduled_date_time' => $request->scheduled_date_time ? date('Y-m-d H:i:s', strtotime($request->scheduled_date_time)) : null,
+                'address' => $request->address,
+                'location' => $request->location,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+            ]);
+
+            // Delete existing ticket items
+            TicketItem::where('ticket_id', $ticket->id)->delete();
+
+            // Handle ticket items
+            if ($request->has('items') && is_array($request->items)) {
+                foreach ($request->items as $item) {
+                    TicketItem::create([
+                        'ticket_id' => $ticket->id,
+                        'service_item_id' => $item['service_item_id'],
+                        'quantity' => $item['quantity'],
+                    ]);
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'Failed to update complaint: ' . $e->getMessage()]);
+        }
 
         // Handle new file attachments
         if ($request->hasFile('attachments')) {

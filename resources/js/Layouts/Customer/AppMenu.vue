@@ -55,6 +55,7 @@ const model = ref([
         label: 'Main Menu',
         items: [
             { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: route('customer:dashboard'), starts_with: 'customer/dashboard', visible: true },
+            { label: 'My Wallet', icon: 'pi pi-fw pi-wallet', to: route('customer:wallet.index'), starts_with: 'customer/wallet', visible: true },
             { label: 'My Complaints', icon: 'pi pi-fw pi-exclamation-triangle', to: route('customer:tickets.index'), starts_with: 'customer/tickets', visible: true },
         ]
     }
