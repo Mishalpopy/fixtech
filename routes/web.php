@@ -21,35 +21,7 @@ use Illuminate\Support\Facades\Route;
 
 
 
-//services
-Route::resource('services', ServiceController::class)->names('services');
-Route::post('services/{service}/change-status', [ServiceController::class, 'changeStatus'])->name('services.change_status');
 
-//sub services
-Route::resource('sub-services', SubServiceController::class)->names('sub-services');
-Route::post('sub-services/{subService}/change-status', [SubServiceController::class, 'changeStatus'])->name('sub-services.change_status');
-
-//service items
-Route::resource('service-items', ServiceItemController::class)->names('service-items');
-Route::post('service-items/{serviceItem}/change-status', [ServiceItemController::class, 'changeStatus'])->name('service-items.change_status');
-
-//service processes
-Route::resource('processes', ServiceProcessController::class)->names('processes');
-Route::get('processes/bulk/create', [ServiceProcessController::class, 'bulkCreate'])->name('processes.bulk.create');
-Route::post('processes/bulk/store', [ServiceProcessController::class, 'bulkStore'])->name('processes.bulk.store');
-Route::post('processes/{process}/change-status', [ServiceProcessController::class, 'changeStatus'])->name('processes.change_status');
-
-//price charts
-Route::resource('price-charts', SubServicePriceChartController::class)->names('price-charts');
-Route::get('price-charts/bulk/create', [SubServicePriceChartController::class, 'bulkCreate'])->name('price-charts.bulk.create');
-Route::post('price-charts/bulk/store', [SubServicePriceChartController::class, 'bulkStore'])->name('price-charts.bulk.store');
-Route::post('price-charts/{priceChart}/change-status', [SubServicePriceChartController::class, 'changeStatus'])->name('price-charts.change_status');
-
-//faqs
-Route::resource('faqs', SubServiceFaqController::class)->names('faqs');
-Route::get('faqs/bulk/create', [SubServiceFaqController::class, 'bulkCreate'])->name('faqs.bulk.create');
-Route::post('faqs/bulk/store', [SubServiceFaqController::class, 'bulkStore'])->name('faqs.bulk.store');
-Route::post('faqs/{faq}/change-status', [SubServiceFaqController::class, 'changeStatus'])->name('faqs.change_status');
 
 Route::prefix('admin/')->name('admin:')->group(function () {
 

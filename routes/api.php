@@ -24,26 +24,32 @@ use Illuminate\Support\Facades\Route;
 
 // Public API routes
 Route::prefix('v1')->group(function () {
-    
+
+
+
     // Customer API Routes
     Route::prefix('customer')->name('api.customer.')->group(function () {
         // Public routes (no authentication required)
         Route::post('register', [CustomerAuthController::class, 'register'])->name('register');
         Route::post('login', [CustomerAuthController::class, 'login'])->name('login');
-        
+
+        // Services routes
+        Route::get('services', [CustomerServiceController::class, 'index'])->name('services.index');
+        Route::get('services/{id}', [CustomerServiceController::class, 'show'])->name('services.show');
+
         // Protected routes (authentication required)
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [CustomerAuthController::class, 'logout'])->name('logout');
             Route::get('profile', [CustomerAuthController::class, 'profile'])->name('profile');
-            
+
             // Services routes
-            Route::get('services', [CustomerServiceController::class, 'index'])->name('services.index');
-            Route::get('services/{id}', [CustomerServiceController::class, 'show'])->name('services.show');
-            
+            // Route::get('services', [CustomerServiceController::class, 'index'])->name('services.index');
+            // Route::get('services/{id}', [CustomerServiceController::class, 'show'])->name('services.show');
+
             // Complaint routes
             Route::apiResource('complaints', CustomerTicketController::class);
             Route::get('complaints/{ticket}/attachments/{attachment}/download', [CustomerTicketController::class, 'downloadAttachment'])->name('complaints.attachments.download');
-            
+
             // Wallet & Payment routes
             Route::prefix('wallet')->group(function () {
                 Route::get('/balance', [CustomerPaymentController::class, 'getWalletBalance'])->name('wallet.balance');
@@ -62,12 +68,12 @@ Route::prefix('v1')->group(function () {
         // Public routes (no authentication required)
         Route::post('register', [PartnerAuthController::class, 'register'])->name('register');
         Route::post('login', [PartnerAuthController::class, 'login'])->name('login');
-        
+
         // Protected routes (authentication required)
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('logout', [PartnerAuthController::class, 'logout'])->name('logout');
             Route::get('profile', [PartnerAuthController::class, 'profile'])->name('profile');
-            
+
             // Assigned complaints routes
             Route::apiResource('complaints', PartnerTicketController::class)->only(['index', 'show']);
             Route::post('complaints/{ticket}/update-status', [PartnerTicketController::class, 'updateStatus'])->name('complaints.update_status');
@@ -84,7 +90,7 @@ Route::prefix('v1')->group(function () {
             Route::post('complaints/{ticket}/assign', [AdminTicketController::class, 'assign'])->name('complaints.assign');
             Route::post('complaints/{ticket}/update-status', [AdminTicketController::class, 'updateStatus'])->name('complaints.update_status');
             Route::get('complaints/{ticket}/attachments/{attachment}/download', [AdminTicketController::class, 'downloadAttachment'])->name('complaints.attachments.download');
-            
+
             // Helper routes
             Route::get('customers', [AdminTicketController::class, 'getCustomers'])->name('customers');
             Route::get('partners', [AdminTicketController::class, 'getPartners'])->name('partners');
@@ -106,5 +112,3 @@ Route::get('health', function () {
         'timestamp' => now()->toDateTimeString(),
     ]);
 });
-
-
