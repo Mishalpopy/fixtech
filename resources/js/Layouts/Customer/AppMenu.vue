@@ -57,6 +57,8 @@ const model = ref([
             { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: route('customer:dashboard'), starts_with: 'customer/dashboard', visible: true },
             { label: 'My Wallet', icon: 'pi pi-fw pi-wallet', to: route('customer:wallet.index'), starts_with: 'customer/wallet', visible: true },
             { label: 'My Complaints', icon: 'pi pi-fw pi-exclamation-triangle', to: route('customer:tickets.index'), starts_with: 'customer/tickets', visible: true },
+            { label: 'My Reviews', icon: 'pi pi-fw pi-star', to: route('customer:reviews.index'), starts_with: 'customer/reviews', visible: true },
+            { label: 'My Testimonials', icon: 'pi pi-fw pi-comment', to: route('customer:testimonials.index'), starts_with: 'customer/testimonials', visible: true },
         ]
     }
 ]);

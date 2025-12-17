@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\Customer\CustomerAuthController;
 use App\Http\Controllers\Api\Customer\TicketController as CustomerTicketController;
 use App\Http\Controllers\Api\Customer\PaymentController as CustomerPaymentController;
 use App\Http\Controllers\Api\Customer\ServiceController as CustomerServiceController;
+use App\Http\Controllers\Api\Customer\ReviewController as CustomerReviewController;
+use App\Http\Controllers\Api\Customer\TestimonialController as CustomerTestimonialController;
 use App\Http\Controllers\Api\Partner\PartnerAuthController;
 use App\Http\Controllers\Api\Partner\TicketController as PartnerTicketController;
 use App\Http\Controllers\Api\Admin\TicketController as AdminTicketController;
@@ -36,6 +38,9 @@ Route::prefix('v1')->group(function () {
         // Services routes
         Route::get('services', [CustomerServiceController::class, 'index'])->name('services.index');
         Route::get('services/{id}', [CustomerServiceController::class, 'show'])->name('services.show');
+        
+        // Reviews routes (public - to view service reviews)
+        Route::get('services/{serviceId}/reviews', [CustomerReviewController::class, 'getServiceReviews'])->name('services.reviews');
 
         // Protected routes (authentication required)
         Route::middleware('auth:sanctum')->group(function () {
@@ -60,6 +65,12 @@ Route::prefix('v1')->group(function () {
                 Route::get('/deposit/status/{paymentId}', [CustomerPaymentController::class, 'getDepositStatus'])->name('wallet.deposit.status');
                 Route::post('/withdrawal', [CustomerPaymentController::class, 'requestWithdrawal'])->name('wallet.withdrawal');
             });
+
+            // Reviews routes
+            Route::apiResource('reviews', CustomerReviewController::class);
+
+            // Testimonials routes
+            Route::apiResource('testimonials', CustomerTestimonialController::class);
         });
     });
 
@@ -96,6 +107,9 @@ Route::prefix('v1')->group(function () {
             Route::get('partners', [AdminTicketController::class, 'getPartners'])->name('partners');
         });
     });
+
+    // Public testimonials route (no authentication required)
+    Route::get('testimonials/approved', [CustomerTestimonialController::class, 'getApproved'])->name('api.testimonials.approved');
 });
 
 // Paymob webhook route (no authentication required)

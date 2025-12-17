@@ -34,4 +34,14 @@ class Service extends Model
     {
         return $this->hasMany(SubService::class);
     }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
+    }
 }

@@ -4,6 +4,8 @@ use App\Http\Controllers\Customer\Auth\CustomerAuthenticatedSessionController;
 use App\Http\Controllers\Customer\Dashboard\CustomerDashboardController;
 use App\Http\Controllers\Customer\Ticket\TicketController;
 use App\Http\Controllers\Customer\Wallet\WalletController;
+use App\Http\Controllers\Customer\Review\ReviewController;
+use App\Http\Controllers\Customer\Testimonial\TestimonialController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('customer/')->name('customer:')->group(function () {
@@ -39,6 +41,12 @@ Route::prefix('customer/')->name('customer:')->group(function () {
             Route::get('/withdrawal', [WalletController::class, 'withdrawal'])->name('withdrawal');
             Route::post('/withdrawal', [WalletController::class, 'processWithdrawal'])->name('withdrawal.process');
         });
+
+        // Reviews routes
+        Route::resource('reviews', ReviewController::class)->names('reviews');
+
+        // Testimonials routes
+        Route::resource('testimonials', TestimonialController::class)->names('testimonials');
     });
 
     // Wallet callback route (no authentication required for Paymob redirects)

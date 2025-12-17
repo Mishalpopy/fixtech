@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\Services\ServiceProcessController;
 use App\Http\Controllers\Admin\Services\SubServicePriceChartController;
 use App\Http\Controllers\Admin\Services\SubServiceFaqController;
 use App\Http\Controllers\Admin\Tickets\TicketController;
+use App\Http\Controllers\Admin\Reviews\ReviewController;
+use App\Http\Controllers\Admin\Testimonials\TestimonialController;
 use App\Http\Controllers\Admin\Voucher\VoucherCodeController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\User\RoleController;
@@ -90,6 +92,15 @@ Route::prefix('admin/')->name('admin:')->group(function () {
         Route::get('faqs/bulk/create', [SubServiceFaqController::class, 'bulkCreate'])->name('faqs.bulk.create');
         Route::post('faqs/bulk/store', [SubServiceFaqController::class, 'bulkStore'])->name('faqs.bulk.store');
         Route::post('faqs/{faq}/change-status', [SubServiceFaqController::class, 'changeStatus'])->name('faqs.change_status');
+
+        //reviews
+        Route::resource('reviews', ReviewController::class)->names('reviews');
+        Route::post('reviews/{review}/change-status', [ReviewController::class, 'changeStatus'])->name('reviews.change_status');
+
+        //testimonials
+        Route::resource('testimonials', TestimonialController::class)->names('testimonials');
+        Route::post('testimonials/{testimonial}/approve', [TestimonialController::class, 'approve'])->name('testimonials.approve');
+        Route::post('testimonials/{testimonial}/reject', [TestimonialController::class, 'reject'])->name('testimonials.reject');
 
 
         //settings section

@@ -145,6 +145,8 @@ const model = ref([
                     }
                 ]
             },
+            { label: 'Reviews', icon: 'pi pi-fw pi-star', to: route('admin:reviews.index'), starts_with: 'admin/reviews', visible: true },
+            { label: 'Testimonials', icon: 'pi pi-fw pi-comment', to: route('admin:testimonials.index'), starts_with: 'admin/testimonials', visible: true },
            
         ]
     }
