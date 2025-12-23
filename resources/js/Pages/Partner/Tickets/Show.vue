@@ -131,7 +131,7 @@ const openStatusDialog = () => {
 };
 
 const updateStatus = () => {
-    statusForm.post(route('partner:tickets.update-status', props.ticket.id), {
+    statusForm.post(route('partner:tickets.update_status', props.ticket.id), {
         onSuccess: () => {
             showStatusDialog.value = false;
         }
