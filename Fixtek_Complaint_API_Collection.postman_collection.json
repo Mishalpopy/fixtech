@@ -189,6 +189,16 @@
 									"mode": "formdata",
 									"formdata": [
 										{
+											"key": "service_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "sub_service_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
 											"key": "title",
 											"value": "Plumbing Issue in Kitchen",
 											"type": "text"
@@ -206,6 +216,21 @@
 										{
 											"key": "priority",
 											"value": "high",
+											"type": "text"
+										},
+										{
+											"key": "address",
+											"value": "123 Main St, City, State",
+											"type": "text"
+										},
+										{
+											"key": "total_amount",
+											"value": "500.00",
+											"type": "text"
+										},
+										{
+											"key": "payment_method",
+											"value": "WALLET",
 											"type": "text"
 										},
 										{
@@ -261,6 +286,16 @@
 									"mode": "formdata",
 									"formdata": [
 										{
+											"key": "service_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "sub_service_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
 											"key": "title",
 											"value": "Updated: Plumbing Issue in Kitchen",
 											"type": "text"
@@ -278,6 +313,21 @@
 										{
 											"key": "priority",
 											"value": "urgent",
+											"type": "text"
+										},
+										{
+											"key": "address",
+											"value": "123 Main St, City, State",
+											"type": "text"
+										},
+										{
+											"key": "total_amount",
+											"value": "750.00",
+											"type": "text"
+										},
+										{
+											"key": "payment_method",
+											"value": "COD",
 											"type": "text"
 										},
 										{
@@ -656,6 +706,16 @@
 											"type": "text"
 										},
 										{
+											"key": "service_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "sub_service_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
 											"key": "title",
 											"value": "Admin Created Complaint",
 											"type": "text"
@@ -673,6 +733,21 @@
 										{
 											"key": "priority",
 											"value": "medium",
+											"type": "text"
+										},
+										{
+											"key": "address",
+											"value": "123 Main St, City, State",
+											"type": "text"
+										},
+										{
+											"key": "total_amount",
+											"value": "1000.00",
+											"type": "text"
+										},
+										{
+											"key": "payment_method",
+											"value": "WALLET",
 											"type": "text"
 										},
 										{
@@ -743,6 +818,16 @@
 											"type": "text"
 										},
 										{
+											"key": "service_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
+											"key": "sub_service_id",
+											"value": "1",
+											"type": "text"
+										},
+										{
 											"key": "title",
 											"value": "Updated: Admin Created Complaint",
 											"type": "text"
@@ -765,6 +850,21 @@
 										{
 											"key": "status",
 											"value": "assigned",
+											"type": "text"
+										},
+										{
+											"key": "address",
+											"value": "123 Main St, City, State",
+											"type": "text"
+										},
+										{
+											"key": "total_amount",
+											"value": "1200.00",
+											"type": "text"
+										},
+										{
+											"key": "payment_method",
+											"value": "COD",
 											"type": "text"
 										},
 										{

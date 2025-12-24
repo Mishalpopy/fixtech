@@ -27,12 +27,14 @@ class Ticket extends Model
         'location',
         'latitude',
         'longitude',
+        'total_amount',
+        'payment_method',
         'admin_notes',
         'partner_notes',
         'assigned_partner_id',
         'assigned_by',
         'assigned_at',
-        'resolved_at'
+        'resolved_at',
     ];
 
     protected $casts = [
@@ -42,11 +44,12 @@ class Ticket extends Model
         'is_urgent' => 'boolean',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'total_amount' => 'decimal:2',
     ];
 
     protected $appends = [
         'formatted_created_at',
-        'formatted_resolved_at'
+        'formatted_resolved_at',
     ];
 
     public function customer(): BelongsTo
@@ -96,7 +99,7 @@ class Ticket extends Model
 
     public function getStatusBadgeClassAttribute()
     {
-        return match($this->status) {
+        return match ($this->status) {
             'open' => 'bg-blue-100 text-blue-800',
             'in_progress' => 'bg-yellow-100 text-yellow-800',
             'resolved' => 'bg-green-100 text-green-800',
@@ -108,7 +111,7 @@ class Ticket extends Model
 
     public function getPriorityBadgeClassAttribute()
     {
-        return match($this->priority) {
+        return match ($this->priority) {
             'low' => 'bg-green-100 text-green-800',
             'medium' => 'bg-blue-100 text-blue-800',
             'high' => 'bg-yellow-100 text-yellow-800',
@@ -119,7 +122,7 @@ class Ticket extends Model
 
     public function getCategoryLabelAttribute()
     {
-        return match($this->category) {
+        return match ($this->category) {
             'plumbing' => 'Plumbing',
             'electrical' => 'Electrical',
             'hvac' => 'HVAC',
@@ -133,10 +136,10 @@ class Ticket extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($ticket) {
             if (empty($ticket->ticket_number)) {
-                $ticket->ticket_number = 'TKT-' . str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
+                $ticket->ticket_number = 'TKT-'.str_pad(rand(1, 999999), 6, '0', STR_PAD_LEFT);
             }
         });
     }

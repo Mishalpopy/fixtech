@@ -20,6 +20,8 @@ const form = useForm({
     description: props.ticket.description,
     category: props.ticket.category,
     priority: props.ticket.priority,
+    total_amount: props.ticket.total_amount || null,
+    payment_method: props.ticket.payment_method || '',
     attachments: []
 });
 
@@ -161,6 +163,48 @@ const submit = () => {
                         ></textarea>
                         <div v-if="form.errors.description" class="text-red-600 text-sm mt-1">
                             {{ form.errors.description }}
+                        </div>
+                    </div>
+
+                    <!-- Payment Information -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Information</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="total_amount" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Total Amount
+                                </label>
+                                <input
+                                    id="total_amount"
+                                    v-model="form.total_amount"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="Enter total amount"
+                                />
+                                <div v-if="form.errors.total_amount" class="text-red-600 text-sm mt-1">
+                                    {{ form.errors.total_amount }}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Payment Method
+                                </label>
+                                <select
+                                    id="payment_method"
+                                    v-model="form.payment_method"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Select payment method</option>
+                                    <option value="WALLET">Wallet</option>
+                                    <option value="COD">Cash on Delivery</option>
+                                </select>
+                                <div v-if="form.errors.payment_method" class="text-red-600 text-sm mt-1">
+                                    {{ form.errors.payment_method }}
+                                </div>
+                            </div>
                         </div>
                     </div>
 

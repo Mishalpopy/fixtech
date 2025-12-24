@@ -36,6 +36,8 @@ const form = useForm({
     location: '',
     latitude: null,
     longitude: null,
+    total_amount: null,
+    payment_method: '',
     category: '',
     priority: 'medium',
     attachments: []
@@ -516,6 +518,55 @@ const submit = () => {
                                             :class="{ 'p-invalid': form.errors.longitude }"
                                         />
                                         <small v-if="form.errors.longitude" class="p-error">{{ form.errors.longitude }}</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <Divider />
+
+                            <!-- Payment Information -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <i class="pi pi-money-bill text-green-500"></i>
+                                    Payment Information
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label for="total_amount" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Total Amount
+                                        </label>
+                                        <InputNumber
+                                            id="total_amount"
+                                            v-model="form.total_amount"
+                                            :min="0"
+                                            :minFractionDigits="2"
+                                            :maxFractionDigits="2"
+                                            placeholder="Enter total amount"
+                                            class="w-full"
+                                            :class="{ 'p-invalid': form.errors.total_amount }"
+                                        />
+                                        <small v-if="form.errors.total_amount" class="p-error">{{ form.errors.total_amount }}</small>
+                                    </div>
+
+                                    <div>
+                                        <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Payment Method
+                                        </label>
+                                        <Dropdown
+                                            id="payment_method"
+                                            v-model="form.payment_method"
+                                            :options="[
+                                                { label: 'Wallet', value: 'WALLET' },
+                                                { label: 'Cash on Delivery', value: 'COD' }
+                                            ]"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            placeholder="Select payment method"
+                                            class="w-full"
+                                            :class="{ 'p-invalid': form.errors.payment_method }"
+                                        />
+                                        <small v-if="form.errors.payment_method" class="p-error">{{ form.errors.payment_method }}</small>
                                     </div>
                                 </div>
                             </div>

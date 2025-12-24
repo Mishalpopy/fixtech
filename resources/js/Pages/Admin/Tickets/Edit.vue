@@ -9,6 +9,7 @@ import Textarea from 'primevue/textarea';
 import Dropdown from 'primevue/dropdown';
 import Card from 'primevue/card';
 import Divider from 'primevue/divider';
+import InputNumber from 'primevue/inputnumber';
 
 const props = defineProps({
     ticket: Object,
@@ -31,6 +32,8 @@ const form = useForm({
     category: props.ticket.category,
     priority: props.ticket.priority,
     status: props.ticket.status,
+    total_amount: props.ticket.total_amount || null,
+    payment_method: props.ticket.payment_method || '',
     assigned_partner_id: props.ticket.assigned_partner_id || '',
     admin_notes: props.ticket.admin_notes || ''
 });
@@ -230,6 +233,55 @@ const submit = () => {
                                         required
                                     />
                                     <small v-if="form.errors.description" class="p-error">{{ form.errors.description }}</small>
+                                </div>
+                            </div>
+
+                            <Divider />
+
+                            <!-- Payment Information -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <i class="pi pi-money-bill text-green-500"></i>
+                                    Payment Information
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label for="total_amount" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Total Amount
+                                        </label>
+                                        <InputNumber
+                                            id="total_amount"
+                                            v-model="form.total_amount"
+                                            :min="0"
+                                            :minFractionDigits="2"
+                                            :maxFractionDigits="2"
+                                            placeholder="Enter total amount"
+                                            class="w-full"
+                                            :class="{ 'p-invalid': form.errors.total_amount }"
+                                        />
+                                        <small v-if="form.errors.total_amount" class="p-error">{{ form.errors.total_amount }}</small>
+                                    </div>
+
+                                    <div>
+                                        <label for="payment_method" class="block text-sm font-medium text-gray-700 mb-2">
+                                            Payment Method
+                                        </label>
+                                        <Dropdown
+                                            id="payment_method"
+                                            v-model="form.payment_method"
+                                            :options="[
+                                                { label: 'Wallet', value: 'WALLET' },
+                                                { label: 'Cash on Delivery', value: 'COD' }
+                                            ]"
+                                            optionLabel="label"
+                                            optionValue="value"
+                                            placeholder="Select payment method"
+                                            class="w-full"
+                                            :class="{ 'p-invalid': form.errors.payment_method }"
+                                        />
+                                        <small v-if="form.errors.payment_method" class="p-error">{{ form.errors.payment_method }}</small>
+                                    </div>
                                 </div>
                             </div>
 

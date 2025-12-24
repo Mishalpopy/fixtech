@@ -72,10 +72,15 @@ POST /v1/customer/complaints
 Authorization: Bearer {customer_token}
 Content-Type: multipart/form-data
 
+service_id: 1
+sub_service_id: 1
 title: "Plumbing Issue in Kitchen"
 description: "The kitchen sink is leaking and water is pooling under the cabinet."
 category: "plumbing"
 priority: "high"
+address: "123 Main St, City, State"
+total_amount: 500.00
+payment_method: "WALLET"
 attachments[]: [file1.jpg, file2.pdf]
 ```
 
@@ -92,6 +97,8 @@ attachments[]: [file1.jpg, file2.pdf]
         "category": "plumbing",
         "priority": "high",
         "status": "open",
+        "total_amount": "500.00",
+        "payment_method": "WALLET",
         "created_at": "2025-10-22T22:30:00.000000Z",
         "attachments": [
             {
@@ -200,6 +207,32 @@ open → assigned → in_progress → resolved → closed
 - **resolved** - Partner has resolved the complaint
 - **closed** - Admin has closed the complaint
 - **cancelled** - Complaint was cancelled
+
+## Payment Fields
+
+### Total Amount
+- **Field:** `total_amount`
+- **Type:** Decimal (numeric)
+- **Required:** No (optional)
+- **Format:** Decimal number with 2 decimal places (e.g., `500.00`, `1000.50`)
+- **Description:** The total amount for the complaint/service
+- **Example:** `500.00`
+
+### Payment Method
+- **Field:** `payment_method`
+- **Type:** Enum (string)
+- **Required:** No (optional)
+- **Values:**
+  - `WALLET` - Payment from customer wallet
+  - `COD` - Cash on Delivery
+- **Description:** The payment method selected for the complaint
+- **Example:** `"WALLET"` or `"COD"`
+
+### Notes
+- Both `total_amount` and `payment_method` are optional fields
+- If `total_amount` is provided, it should be a positive number
+- `payment_method` must be one of the allowed values: `WALLET` or `COD`
+- These fields can be included when creating or updating complaints via Customer or Admin APIs
 
 ## File Upload
 

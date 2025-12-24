@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
-use App\Models\TicketItem;
 use App\Models\TicketAttachment;
+use App\Models\TicketItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -19,7 +19,7 @@ class TicketController extends Controller
     public function index(Request $request)
     {
         $customer = $request->user('sanctum');
-        
+
         $query = Ticket::with(['attachments', 'service', 'subService', 'ticketItems.serviceItem'])
             ->where('customer_id', $customer->id);
 
@@ -40,8 +40,8 @@ class TicketController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('ticket_number', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('ticket_number', 'like', "%{$search}%");
             });
         }
 
@@ -50,7 +50,7 @@ class TicketController extends Controller
         return response()->json([
             'success' => true,
             'data' => $tickets,
-            'message' => 'Complaints retrieved successfully'
+            'message' => 'Complaints retrieved successfully',
         ]);
     }
 
@@ -73,6 +73,8 @@ class TicketController extends Controller
             'location' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'total_amount' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|in:WALLET,COD',
             'category' => 'nullable|in:plumbing,electrical,hvac,appliance,general,other',
             'priority' => 'required|in:low,medium,high,urgent',
             'attachments' => 'nullable|array|max:5',
@@ -98,7 +100,9 @@ class TicketController extends Controller
                 'location' => $request->location,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
-                'status' => 'open'
+                'total_amount' => $request->total_amount,
+                'payment_method' => $request->payment_method,
+                'status' => 'open',
             ]);
 
             // Handle ticket items
@@ -116,7 +120,7 @@ class TicketController extends Controller
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $originalName = $file->getClientOriginalName();
-                    $fileName = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                    $fileName = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
                     $filePath = $file->storeAs('ticket-attachments', $fileName, 'public');
 
                     TicketAttachment::create([
@@ -134,16 +138,17 @@ class TicketController extends Controller
             $ticket->load('attachments', 'service', 'subService', 'ticketItems.serviceItem');
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create complaint: ' . $e->getMessage()
+                'message' => 'Failed to create complaint: '.$e->getMessage(),
             ], 500);
         }
 
         return response()->json([
             'success' => true,
             'data' => $ticket,
-            'message' => 'Complaint submitted successfully! Complaint Number: ' . $ticket->ticket_number
+            'message' => 'Complaint submitted successfully! Complaint Number: '.$ticket->ticket_number,
         ], 201);
     }
 
@@ -157,7 +162,7 @@ class TicketController extends Controller
         if ($ticket->customer_id !== $customer->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are not authorized to view this complaint.'
+                'message' => 'You are not authorized to view this complaint.',
             ], 403);
         }
 
@@ -166,7 +171,7 @@ class TicketController extends Controller
         return response()->json([
             'success' => true,
             'data' => $ticket,
-            'message' => 'Complaint retrieved successfully'
+            'message' => 'Complaint retrieved successfully',
         ]);
     }
 
@@ -180,7 +185,7 @@ class TicketController extends Controller
         if ($ticket->customer_id !== $customer->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are not authorized to update this complaint.'
+                'message' => 'You are not authorized to update this complaint.',
             ], 403);
         }
 
@@ -188,7 +193,7 @@ class TicketController extends Controller
         if ($ticket->status !== 'open') {
             return response()->json([
                 'success' => false,
-                'message' => 'You can only edit complaints that are open.'
+                'message' => 'You can only edit complaints that are open.',
             ], 422);
         }
 
@@ -206,6 +211,8 @@ class TicketController extends Controller
             'location' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'total_amount' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|in:WALLET,COD',
             'category' => 'nullable|in:plumbing,electrical,hvac,appliance,general,other',
             'priority' => 'required|in:low,medium,high,urgent',
             'attachments' => 'nullable|array|max:5',
@@ -228,6 +235,8 @@ class TicketController extends Controller
                 'location' => $request->location,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
+                'total_amount' => $request->total_amount,
+                'payment_method' => $request->payment_method,
             ]);
 
             // Delete existing ticket items
@@ -247,9 +256,10 @@ class TicketController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update complaint: ' . $e->getMessage()
+                'message' => 'Failed to update complaint: '.$e->getMessage(),
             ], 500);
         }
 
@@ -257,7 +267,7 @@ class TicketController extends Controller
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $originalName = $file->getClientOriginalName();
-                $fileName = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                $fileName = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
                 $filePath = $file->storeAs('ticket-attachments', $fileName, 'public');
 
                 TicketAttachment::create([
@@ -275,7 +285,7 @@ class TicketController extends Controller
         return response()->json([
             'success' => true,
             'data' => $ticket,
-            'message' => 'Complaint updated successfully'
+            'message' => 'Complaint updated successfully',
         ]);
     }
 
@@ -289,7 +299,7 @@ class TicketController extends Controller
         if ($ticket->customer_id !== $customer->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are not authorized to delete this complaint.'
+                'message' => 'You are not authorized to delete this complaint.',
             ], 403);
         }
 
@@ -297,7 +307,7 @@ class TicketController extends Controller
         if ($ticket->status !== 'open') {
             return response()->json([
                 'success' => false,
-                'message' => 'You can only delete complaints that are open.'
+                'message' => 'You can only delete complaints that are open.',
             ], 422);
         }
 
@@ -312,7 +322,7 @@ class TicketController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Complaint deleted successfully'
+            'message' => 'Complaint deleted successfully',
         ]);
     }
 
@@ -326,7 +336,7 @@ class TicketController extends Controller
         if ($ticket->customer_id !== $customer->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'You are not authorized to download this attachment.'
+                'message' => 'You are not authorized to download this attachment.',
             ], 403);
         }
 
@@ -334,14 +344,14 @@ class TicketController extends Controller
         if ($attachment->ticket_id !== $ticket->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Attachment not found.'
+                'message' => 'Attachment not found.',
             ], 404);
         }
 
-        if (!Storage::disk('public')->exists($attachment->file_path)) {
+        if (! Storage::disk('public')->exists($attachment->file_path)) {
             return response()->json([
                 'success' => false,
-                'message' => 'File not found.'
+                'message' => 'File not found.',
             ], 404);
         }
 

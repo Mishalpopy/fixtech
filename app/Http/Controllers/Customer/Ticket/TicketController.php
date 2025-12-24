@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Customer\Ticket;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ticket;
-use App\Models\TicketItem;
 use App\Models\Service;
-use App\Models\SubService;
 use App\Models\ServiceItem;
+use App\Models\SubService;
+use App\Models\Ticket;
 use App\Models\TicketAttachment;
+use App\Models\TicketItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +30,7 @@ class TicketController extends Controller
             ->paginate(10);
 
         return Inertia::render('Customer/Tickets/Index', [
-            'tickets' => $tickets
+            'tickets' => $tickets,
         ]);
     }
 
@@ -42,7 +42,7 @@ class TicketController extends Controller
         $services = Service::where('status', true)->get(['id', 'name']);
 
         return Inertia::render('Customer/Tickets/Create', [
-            'services' => $services
+            'services' => $services,
         ]);
     }
 
@@ -52,7 +52,7 @@ class TicketController extends Controller
         $subServices = SubService::where('service_id', $serviceId)
             ->where('status', true)
             ->get(['id', 'name', 'service_id']);
-        
+
         return response()->json($subServices);
     }
 
@@ -62,7 +62,7 @@ class TicketController extends Controller
         $serviceItems = ServiceItem::where('sub_service_id', $subServiceId)
             ->where('status', true)
             ->get(['id', 'name', 'sub_service_id', 'price']);
-        
+
         return response()->json($serviceItems);
     }
 
@@ -85,6 +85,8 @@ class TicketController extends Controller
             'location' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
+            'total_amount' => 'nullable|numeric|min:0',
+            'payment_method' => 'nullable|in:WALLET,COD',
             'category' => 'nullable|in:plumbing,electrical,hvac,appliance,general,other',
             'priority' => 'required|in:low,medium,high,urgent',
             'attachments' => 'nullable|array|max:5',
@@ -110,7 +112,9 @@ class TicketController extends Controller
                 'location' => $request->location,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
-                'status' => 'open'
+                'total_amount' => $request->total_amount,
+                'payment_method' => $request->payment_method,
+                'status' => 'open',
             ]);
 
             // Handle ticket items
@@ -128,7 +132,7 @@ class TicketController extends Controller
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $originalName = $file->getClientOriginalName();
-                    $fileName = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                    $fileName = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
                     $filePath = $file->storeAs('ticket-attachments', $fileName, 'public');
 
                     TicketAttachment::create([
@@ -144,11 +148,12 @@ class TicketController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Failed to create complaint: ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Failed to create complaint: '.$e->getMessage()]);
         }
 
         return redirect()->route('customer:tickets.index')
-            ->with('success', 'Complaint submitted successfully! Complaint Number: ' . $ticket->ticket_number);
+            ->with('success', 'Complaint submitted successfully! Complaint Number: '.$ticket->ticket_number);
     }
 
     /**
@@ -157,7 +162,7 @@ class TicketController extends Controller
     public function show(Ticket $ticket)
     {
         $customer = Auth::guard('customer')->user();
-        
+
         // Ensure the ticket belongs to the authenticated customer
         if ($ticket->customer_id !== $customer->id) {
             abort(403, 'Unauthorized access to ticket.');
@@ -166,7 +171,7 @@ class TicketController extends Controller
         $ticket->load('attachments', 'service', 'subService', 'ticketItems.serviceItem');
 
         return Inertia::render('Customer/Tickets/Show', [
-            'ticket' => $ticket
+            'ticket' => $ticket,
         ]);
     }
 
@@ -176,7 +181,7 @@ class TicketController extends Controller
     public function edit(Ticket $ticket)
     {
         $customer = Auth::guard('customer')->user();
-        
+
         // Ensure the ticket belongs to the authenticated customer
         if ($ticket->customer_id !== $customer->id) {
             abort(403, 'Unauthorized access to ticket.');
@@ -197,7 +202,7 @@ class TicketController extends Controller
             'ticket' => $ticket,
             'services' => $services,
             'subServices' => $subServices,
-            'serviceItems' => $serviceItems
+            'serviceItems' => $serviceItems,
         ]);
     }
 
@@ -207,7 +212,7 @@ class TicketController extends Controller
     public function update(Request $request, Ticket $ticket)
     {
         $customer = Auth::guard('customer')->user();
-        
+
         // Ensure the ticket belongs to the authenticated customer
         if ($ticket->customer_id !== $customer->id) {
             abort(403, 'Unauthorized access to ticket.');
@@ -255,6 +260,8 @@ class TicketController extends Controller
                 'location' => $request->location,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
+                'total_amount' => $request->total_amount,
+                'payment_method' => $request->payment_method,
             ]);
 
             // Delete existing ticket items
@@ -274,14 +281,15 @@ class TicketController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Failed to update complaint: ' . $e->getMessage()]);
+
+            return back()->withErrors(['error' => 'Failed to update complaint: '.$e->getMessage()]);
         }
 
         // Handle new file attachments
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $originalName = $file->getClientOriginalName();
-                $fileName = time() . '_' . Str::random(10) . '.' . $file->getClientOriginalExtension();
+                $fileName = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
                 $filePath = $file->storeAs('ticket-attachments', $fileName, 'public');
 
                 TicketAttachment::create([
@@ -304,7 +312,7 @@ class TicketController extends Controller
     public function destroy(Ticket $ticket)
     {
         $customer = Auth::guard('customer')->user();
-        
+
         // Ensure the ticket belongs to the authenticated customer
         if ($ticket->customer_id !== $customer->id) {
             abort(403, 'Unauthorized access to ticket.');
@@ -333,7 +341,7 @@ class TicketController extends Controller
     public function downloadAttachment(Ticket $ticket, TicketAttachment $attachment)
     {
         $customer = Auth::guard('customer')->user();
-        
+
         // Ensure the ticket belongs to the authenticated customer
         if ($ticket->customer_id !== $customer->id) {
             abort(403, 'Unauthorized access to ticket.');
@@ -344,9 +352,9 @@ class TicketController extends Controller
             abort(404, 'Attachment not found.');
         }
 
-        $filePath = storage_path('app/public/' . $attachment->file_path);
-        
-        if (!file_exists($filePath)) {
+        $filePath = storage_path('app/public/'.$attachment->file_path);
+
+        if (! file_exists($filePath)) {
             abort(404, 'File not found.');
         }
 
