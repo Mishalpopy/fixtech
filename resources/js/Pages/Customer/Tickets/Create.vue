@@ -166,6 +166,13 @@ const submit = () => {
         onSuccess: () => {
             form.reset();
             selectedFiles.value = [];
+        },
+        onError: (errors) => {
+            console.error('Form submission errors:', errors);
+            // Errors will be automatically displayed via form.errors
+        },
+        onFinish: () => {
+            // This runs whether success or error
         }
     });
 };
@@ -634,6 +641,21 @@ const submit = () => {
                             </div>
 
                             <Divider />
+
+                            <!-- Global Error Message -->
+                            <div v-if="form.errors.error || Object.keys(form.errors).length > 0" class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <div class="flex items-start gap-3">
+                                    <i class="pi pi-exclamation-triangle text-red-500 text-xl mt-1"></i>
+                                    <div class="flex-1">
+                                        <h4 class="text-red-800 font-semibold mb-2">Please fix the following errors:</h4>
+                                        <ul class="list-disc list-inside text-sm text-red-700 space-y-1">
+                                            <li v-for="(error, field) in form.errors" :key="field">
+                                                <strong>{{ field }}:</strong> {{ Array.isArray(error) ? error[0] : error }}
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
 
                             <!-- Submit Section -->
                             <div class="flex justify-between items-center pt-4">

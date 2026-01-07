@@ -9,6 +9,7 @@ use App\Models\SubService;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
 use App\Models\TicketItem;
+use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -85,15 +86,32 @@ class TicketController extends Controller
             'location' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
-            'total_amount' => 'nullable|numeric|min:0',
+            'total_amount' => 'nullable|numeric|min:0|required_if:payment_method,WALLET',
             'payment_method' => 'nullable|in:WALLET,COD',
             'category' => 'nullable|in:plumbing,electrical,hvac,appliance,general,other',
             'priority' => 'required|in:low,medium,high,urgent',
             'attachments' => 'nullable|array|max:5',
             'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240',
+        ], [
+            'total_amount.required_if' => 'Total amount is required when payment method is WALLET.',
         ]);
 
         $customer = Auth::guard('customer')->user();
+
+        // Validate wallet payment if payment method is WALLET
+        if ($request->payment_method === 'WALLET') {
+            if (! $request->total_amount || $request->total_amount <= 0) {
+                return back()->withErrors(['total_amount' => 'Total amount is required and must be greater than 0 for wallet payment.']);
+            }
+
+            $wallet = $customer->getOrCreateWallet();
+
+            if (! $wallet->hasSufficientBalance($request->total_amount)) {
+                return back()->withErrors([
+                    'total_amount' => 'Insufficient wallet balance. Available balance: '.$wallet->available_balance.' '.$wallet->currency,
+                ]);
+            }
+        }
 
         DB::beginTransaction();
 
@@ -116,6 +134,34 @@ class TicketController extends Controller
                 'payment_method' => $request->payment_method,
                 'status' => 'open',
             ]);
+
+            // Deduct from wallet if payment method is WALLET
+            if ($request->payment_method === 'WALLET' && $request->total_amount > 0) {
+                // Get or create wallet, then lock it for update to prevent race conditions
+                $wallet = $customer->getOrCreateWallet();
+
+                // Lock the wallet row for update within the transaction
+                $wallet = Wallet::where('id', $wallet->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                // Double-check balance within transaction
+                if (! $wallet->hasSufficientBalance($request->total_amount)) {
+                    throw new \Exception('Insufficient wallet balance. Available balance: '.$wallet->available_balance.' '.$wallet->currency);
+                }
+
+                $wallet->debit(
+                    $request->total_amount,
+                    'Payment for complaint #'.$ticket->ticket_number.' - '.$request->title,
+                    'payment',
+                    $ticket,
+                    [
+                        'ticket_number' => $ticket->ticket_number,
+                        'ticket_id' => $ticket->id,
+                        'payment_type' => 'complaint_payment',
+                    ]
+                );
+            }
 
             // Handle ticket items
             if ($request->has('items') && is_array($request->items)) {
@@ -146,10 +192,22 @@ class TicketController extends Controller
             }
 
             DB::commit();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            throw $e; // Re-throw validation exceptions to let Laravel handle them
         } catch (\Exception $e) {
             DB::rollBack();
 
-            return back()->withErrors(['error' => 'Failed to create complaint: '.$e->getMessage()]);
+            \Log::error('Failed to create complaint', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'customer_id' => $customer->id,
+                'payment_method' => $request->payment_method,
+                'total_amount' => $request->total_amount,
+                'request_data' => $request->except(['attachments']),
+            ]);
+
+            return back()->withErrors(['error' => 'Failed to create complaint: '.$e->getMessage()])->withInput();
         }
 
         return redirect()->route('customer:tickets.index')
